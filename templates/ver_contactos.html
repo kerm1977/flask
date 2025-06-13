@@ -1,8 +1,36 @@
 {% extends 'base.html' %}
 
-{% block title %}Ver Contactos{% endblock %} {# Cambiado el título para ser más descriptivo #}
+{% block title %}Ver Contactos{% endblock %}
 
 {% block content %}
+<style>
+    /* Estilos adicionales si fueran necesarios */
+    body {
+        background-color: #f3f4f6; /* Un gris claro de fondo */
+    }
+    .fab-container {
+        position: fixed;
+        bottom: 20px; /* Distancia desde abajo */
+        right: 20px; /* Distancia desde la derecha */
+        z-index: 1000; /* Asegura que esté por encima de otros elementos */
+    }
+    .fab-button {
+        width: 60px; /* Tamaño del botón */
+        height: 60px; /* Tamaño del botón */
+        border-radius: 50%; /* Hacerlo circular */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem; /* Tamaño del icono */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para que se vea flotante */
+        transition: all 0.3s ease;
+    }
+    .fab-button:hover {
+        transform: scale(1.05); /* Pequeño efecto al pasar el ratón */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+</style>
+
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-9">
@@ -60,5 +88,12 @@
             </div>
         </div>
     </div>
+</div>
+
+{# Botón flotante para añadir nuevo contacto (NUEVO) #}
+<div class="fab-container">
+    <a href="{{ url_for('register') }}" class="btn btn-warning fab-button" title="Agregar nuevo contacto"> {# CAMBIO AQUÍ: btn-primary a btn-warning #}
+        <i class="fas fa-plus"></i>
+    </a>
 </div>
 {% endblock %}
