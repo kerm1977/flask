@@ -1,0 +1,9 @@
+/* Puedes agregar estilos personalizados aquí si lo deseas */
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}

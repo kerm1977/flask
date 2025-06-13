@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow p-4 mt-5">
+            <h2 class="text-center mb-4">Iniciar Sesión</h2>
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="mb-3">
+                    {# CAMBIO AQUÍ: Etiqueta y 'name' del input #}
+                    <label for="username_or_email" class="form-label">Nombre de Usuario o Correo Electrónico</label>
+                    <input type="text" class="form-control" id="username_or_email" name="username_or_email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-warning">Iniciar Sesión</button>
+                </div>
+                <p class="text-center mt-3">¿No tienes una cuenta? <a href="{{ url_for('register') }}">Regístrate aquí</a></p>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

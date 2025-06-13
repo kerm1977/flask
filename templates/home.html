@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">¡Bienvenido, {% if username %}{{ username }}{% else %}Invitado{% endif %}!</h1>
+    <p class="lead">Esta es la página de inicio de tu aplicación Flask con sistema de registro y login.</p>
+    <hr class="my-4">
+    <p>Aquí puedes agregar el contenido principal de tu aplicación para usuarios autenticados.</p>
+    {% if not session.logged_in %}
+        <p class="lead">
+            <a class="btn btn-primary btn-lg" href="{{ url_for('login') }}" role="button">Iniciar Sesión</a>
+            <a class="btn btn-secondary btn-lg" href="{{ url_for('register') }}" role="button">Registrarse</a>
+        </p>
+    {% endif %}
+</div>
+{% endblock %}
