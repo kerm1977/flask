@@ -175,11 +175,11 @@ def editar_contacto(user_id):
     return render_template('editar_contacto.html', user=user, avatar_url=avatar_url)
 
 
-# Rutas de Exportación
+# Rutas de Exportación (Individual)
 @contactos_bp.route('/exportar_vcard/<int:user_id>')
 def exportar_vcard(user_id):
     """
-    Exporta los datos de un contacto a un archivo VCard (.vcf).
+    Exporta los datos de un contacto individual a un archivo VCard (.vcf).
     """
     if 'logged_in' not in session or not session['logged_in']:
         flash('Por favor, inicia sesión para exportar contactos.', 'info')
@@ -255,7 +255,7 @@ def exportar_vcard(user_id):
 @contactos_bp.route('/exportar_excel/<int:user_id>')
 def exportar_excel(user_id):
     """
-    Exporta los datos de un contacto a un archivo Excel (.xlsx).
+    Exporta los datos de un contacto individual a un archivo Excel (.xlsx).
     """
     if 'logged_in' not in session or not session['logged_in']:
         flash('Por favor, inicia sesión para exportar contactos.', 'info')
@@ -308,11 +308,11 @@ def exportar_excel(user_id):
         download_name=f'{user.username}_contacto.xlsx'
     )
 
-# NUEVA RUTA: Exportar TODOS los contactos a Excel
+# Ruta: Exportar TODOS los contactos a Excel (MODIFICADA)
 @contactos_bp.route('/exportar_todos_excel')
 def exportar_todos_excel():
     """
-    Exporta los datos de TODOS los contactos a un archivo Excel (.xlsx).
+    Exporta los datos de TODOS los contactos a un archivo Excel (.xlsx) en formato de lista tradicional (filas por usuario, columnas por campo).
     """
     if 'logged_in' not in session or not session['logged_in']:
         flash('Por favor, inicia sesión para exportar todos los contactos.', 'info')
@@ -325,7 +325,7 @@ def exportar_todos_excel():
         sheet = workbook.active
         sheet.title = "Todos los Contactos"
 
-        # Encabezados de las columnas para todos los usuarios
+        # Nuevos encabezados de las columnas para el formato de lista
         headers = [
             "Nombre de Usuario", "Nombre", "Primer Apellido", "Segundo Apellido",
             "Teléfono", "Email", "Teléfono Emergencia", "Nombre Contacto Emergencia",
@@ -334,7 +334,7 @@ def exportar_todos_excel():
         ]
         sheet.append(headers)
 
-        # Iterar sobre cada usuario y añadir sus datos
+        # Iterar sobre cada usuario y añadir sus datos como una fila
         for user in all_users:
             row_data = [
                 str(user.username),
@@ -368,4 +368,84 @@ def exportar_todos_excel():
         )
     except Exception as e:
         flash(f'Error al exportar todos los contactos a Excel: {e}', 'danger')
-        return redirect(url_for('contactos.ver_contactos')) # Redirige a la lista de contactos
+        return redirect(url_for('contactos.ver_contactos'))
+
+# Ruta: Exportar TODOS los contactos a VCard
+@contactos_bp.route('/exportar_todos_vcard')
+def exportar_todos_vcard():
+    """
+    Exporta los datos de TODOS los contactos a un archivo VCard (.vcf) consolidado.
+    """
+    if 'logged_in' not in session or not session['logged_in']:
+        flash('Por favor, inicia sesión para exportar todos los contactos.', 'info')
+        return redirect(url_for('login'))
+
+    try:
+        all_users = User.query.all()
+        all_vcard_data = []
+
+        for user in all_users:
+            card = vobject.vCard()
+            
+            card.add('n')
+            card.n.value = vobject.vcard.Name(family=user.primer_apellido, given=user.nombre, additional=user.segundo_apellido if user.segundo_apellido else '')
+            
+            card.add('fn')
+            card.fn.value = f"{user.nombre} {user.primer_apellido} {user.segundo_apellido if user.segundo_apellido else ''}".strip()
+
+            if user.telefono:
+                tel = card.add('tel')
+                tel.type_param = 'CELL'
+                tel.value = user.telefono
+            if user.telefono_emergencia:
+                tel_emergencia = card.add('tel')
+                tel_emergencia.type_param = 'WORK'
+                tel_emergencia.params['X-LABEL'] = ['Emergencia'] 
+                tel_emergencia.value = user.telefono_emergencia
+
+            if user.email:
+                email = card.add('email')
+                email.type_param = 'INTERNET'
+                email.value = user.email
+
+            if user.direccion:
+                adr = card.add('adr')
+                adr.type_param = 'HOME'
+                adr.value = vobject.vcard.Address(street=user.direccion) 
+                
+            if user.empresa:
+                card.add('org').value = user.empresa
+
+            if user.actividad:
+                card.add('title').value = user.actividad
+            if user.cedula:
+                card.add('note').value = f"Cédula: {user.cedula}"
+            
+            if user.avatar_url and 'default_avatar.png' not in user.avatar_url:
+                with current_app.app_context():
+                    full_avatar_url = url_for('static', filename=user.avatar_url, _external=True)
+                    photo = card.add('photo')
+                    photo.value = full_avatar_url
+                    photo.type_param = 'URI'
+
+            if user.fecha_actualizacion:
+                card.add('rev').value = user.fecha_actualizacion.isoformat()
+            
+            # Serializa cada vCard y añádelo a la lista
+            all_vcard_data.append(card.serialize())
+        
+        # Une todas las vCards en una sola cadena
+        final_vcf_content = "\n".join(all_vcard_data)
+
+        buffer = io.BytesIO(final_vcf_content.encode('utf-8'))
+
+        return send_file(
+            buffer,
+            mimetype='text/vcard',
+            as_attachment=True,
+            download_name='todos_los_contactos.vcf'
+        )
+    except Exception as e:
+        flash(f'Error al exportar todos los contactos a VCard: {e}', 'danger')
+        return redirect(url_for('contactos.ver_contactos'))
+

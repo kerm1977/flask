@@ -52,7 +52,7 @@ def register():
         nombre_emergencia = request.form.get('nombre_emergencia')
         empresa = request.form.get('empresa')
         cedula = request.form.get('cedula')
-        direccion = request.form.get('direccion')
+        direccion = request.form.get('notas')
         email = request.form.get('email')
         actividad = request.form.get('actividad')
         capacidad = request.form.get('capacidad')

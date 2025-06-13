@@ -157,8 +157,9 @@
                             <li><a class="dropdown-item" href="#" id="exportJpgBtn">Exportar JPG (.jpg)</a></li>
                             <li><hr class="dropdown-divider"></li> {# Divisor #}
                             <li><h6 class="dropdown-header">Exportar Múltiples Contactos</h6></li> {# Otro encabezado #}
-                            {# NUEVO ENLACE: Exportar todos los contactos a Excel #}
                             <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_todos_excel') }}">Exportar Todos a Excel (.xlsx)</a></li>
+                            {# NUEVO ENLACE: Exportar todos los contactos a VCard #}
+                            <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_todos_vcard') }}">Exportar Todos a VCard (.vcf)</a></li>
                         </ul>
                     </div>
                 </div>
