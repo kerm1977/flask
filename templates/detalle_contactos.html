@@ -114,7 +114,7 @@
                     </div>
                 </div>
 
-                {# Dar un ID a este div para ocultarlo temporalmente #}
+                {# Contenedor de botones #}
                 <div class="d-flex flex-wrap justify-content-center gap-2 mt-4" id="export-buttons-container"> 
                     <a href="{{ url_for('contactos.ver_contactos') }}" class="btn btn-warning btn-lg">
                         Volver a la Lista de Contactos
@@ -125,6 +125,26 @@
                     <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                         Eliminar Contacto
                     </button>
+
+                    {# Lógica para deshabilitar el botón de WhatsApp #}
+                    {% set first_digit = user.telefono[0] if user.telefono else '' %}
+                    {% set disable_whatsapp = first_digit in ['1', '2', '3', '4', '5', '9', '0'] %}
+
+                    {% if disable_whatsapp %}
+                        <button class="btn btn-success btn-lg d-flex align-items-center disabled" disabled title="Este número de teléfono no es compatible con WhatsApp.">
+                            <i class="fab fa-whatsapp me-2"></i> Enviar por WhatsApp
+                        </button>
+                    {% else %}
+                        <a href="https://wa.me/{{ user.telefono }}?text={{ (
+                            'Hola, te comparto el contacto de ' 
+                            + user.nombre + ' ' + user.primer_apellido 
+                            + ((' ' + user.segundo_apellido) if user.segundo_apellido else '') 
+                            + '. Su teléfono es ' + user.telefono + '.'
+                        )|urlencode }}" 
+                           target="_blank" class="btn btn-success btn-lg d-flex align-items-center">
+                            <i class="fab fa-whatsapp me-2"></i> Enviar por WhatsApp
+                        </a>
+                    {% endif %}
 
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle btn-lg" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
