@@ -4,27 +4,140 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
+    <div class="col-md-8 col-lg-7"> {# Aumentamos el tamaño de la columna para más campos #}
         <div class="card shadow p-4 mt-5">
             <h2 class="text-center mb-4">Registro de Usuario</h2>
-            <form method="POST" action="{{ url_for('register') }}">
+            {# Asegúrate de que el formulario tenga enctype="multipart/form-data" para subir archivos #}
+            <form method="POST" action="{{ url_for('register') }}" enctype="multipart/form-data">
+                
+                <p class="text-muted text-center">Los campos marcados con * son obligatorios.</p>
+
+                {# Avatar Imagen #}
                 <div class="mb-3">
-                    <label for="username" class="form-label">Nombre de Usuario</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
+                    <label for="avatar" class="form-label">Avatar (Opcional)</label>
+                    <input class="form-control" type="file" id="avatar" name="avatar" accept="image/*">
+                    <div class="form-text">Sube tu imagen de perfil. Se usará una por defecto si no subes una.</div>
                 </div>
+
+                {# Nombre #}
                 <div class="mb-3">
-                    <label for="email" class="form-label">Correo Electrónico</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
+                    <label for="nombre" class="form-label">Nombre *</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" required>
                 </div>
+
+                {# Primer Apellido #}
                 <div class="mb-3">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
+                    <label for="primer_apellido" class="form-label">Primer Apellido *</label>
+                    <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" required>
                 </div>
+
+                {# Segundo Apellido (Opcional) #}
                 <div class="mb-3">
-                    <label for="confirm_password" class="form-label">Confirmar Contraseña</label>
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    <label for="segundo_apellido" class="form-label">Segundo Apellido (Opcional)</label>
+                    <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido">
                 </div>
-                <div class="d-grid gap-2">
+
+                {# Usuario de Registro (obligatorio) #}
+                <div class="mb-3">
+                    <label for="username_registro" class="form-label">Usuario de Registro *</label>
+                    <input type="text" class="form-control" id="username_registro" name="username_registro" required>
+                </div>
+
+                {# Password (obligatorio) #}
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña *</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                {# Confirmar Password (obligatorio) #}
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirmar Contraseña *</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                {# Teléfono (obligatorio) #}
+                <div class="mb-3">
+                    <label for="telefono" class="form-label">Teléfono *</label>
+                    <input type="tel" class="form-control" id="telefono" name="telefono" required>
+                </div>
+
+                {# Teléfono de Emergencia (Opcional) #}
+                <div class="mb-3">
+                    <label for="telefono_emergencia" class="form-label">Teléfono de Emergencia (Opcional)</label>
+                    <input type="tel" class="form-control" id="telefono_emergencia" name="telefono_emergencia">
+                </div>
+
+                {# Nombre Emergencia (Opcional) #}
+                <div class="mb-3">
+                    <label for="nombre_emergencia" class="form-label">Nombre de Contacto de Emergencia (Opcional)</label>
+                    <input type="text" class="form-control" id="nombre_emergencia" name="nombre_emergencia">
+                </div>
+
+                {# Empresa (Opcional) #}
+                <div class="mb-3">
+                    <label for="empresa" class="form-label">Empresa (Opcional)</label>
+                    <input type="text" class="form-control" id="empresa" name="empresa">
+                </div>
+
+                {# Cédula (Opcional) #}
+                <div class="mb-3">
+                    <label for="cedula" class="form-label">Cédula (Opcional)</label>
+                    <input type="text" class="form-control" id="cedula" name="cedula">
+                </div>
+
+                {# Dirección (Opcional) #}
+                <div class="mb-3">
+                    <label for="direccion" class="form-label">Dirección (Opcional)</label>
+                    <textarea class="form-control" id="direccion" name="direccion" rows="3"></textarea>
+                </div>
+
+                {# Email (Opcional) #}
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email (Opcional)</label>
+                    <input type="email" class="form-control" id="email" name="email">
+                </div>
+
+                {# Selector Actividad (Opcional) #}
+                <div class="mb-3">
+                    <label for="actividad" class="form-label">Actividad (Opcional)</label>
+                    <select class="form-select" id="actividad" name="actividad">
+                        {% for option in actividad_opciones %}
+                            <option value="{{ option }}" {% if loop.first %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Selector Capacidad (Opcional) #}
+                <div class="mb-3">
+                    <label for="capacidad" class="form-label">Capacidad (Opcional)</label>
+                    <select class="form-select" id="capacidad" name="capacidad">
+                        {% for option in capacidad_opciones %}
+                            <option value="{{ option }}" {% if loop.first %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Selector Participación (Opcional) #}
+                <div class="mb-3">
+                    <label for="participacion" class="form-label">Participación (Opcional)</label>
+                    <select class="form-select" id="participacion" name="participacion">
+                        {% for option in participacion_opciones %}
+                            <option value="{{ option }}" {% if loop.first %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-success">Registrarse</button>
                 </div>
                 <p class="text-center mt-3">¿Ya tienes una cuenta? <a href="{{ url_for('login') }}">Inicia Sesión</a></p>
@@ -32,4 +145,28 @@
         </div>
     </div>
 </div>
+
+{# Script JavaScript para la funcionalidad de mostrar/ocultar contraseña #}
+<script>
+    // Función genérica para alternar visibilidad de contraseña
+    function setupPasswordToggle(toggleButtonId, passwordInputId) {
+        const toggleButton = document.querySelector(toggleButtonId);
+        const passwordInput = document.querySelector(passwordInputId);
+
+        if (toggleButton && passwordInput) {
+            toggleButton.addEventListener('click', function (e) {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        }
+    }
+
+    // Configurar para el campo de 'Contraseña'
+    setupPasswordToggle('#togglePassword', '#password');
+    // Configurar para el campo de 'Confirmar Contraseña'
+    setupPasswordToggle('#toggleConfirmPassword', '#confirm_password');
+</script>
+
 {% endblock %}

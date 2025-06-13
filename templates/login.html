@@ -9,13 +9,17 @@
             <h2 class="text-center mb-4">Iniciar Sesión</h2>
             <form method="POST" action="{{ url_for('login') }}">
                 <div class="mb-3">
-                    {# CAMBIO AQUÍ: Etiqueta y 'name' del input #}
                     <label for="username_or_email" class="form-label">Nombre de Usuario o Correo Electrónico</label>
                     <input type="text" class="form-control" id="username_or_email" name="username_or_email" required>
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">Contraseña</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="input-group"> {# INICIO DEL CAMBIO #}
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                            <i class="fas fa-eye"></i> {# Icono de ojo para mostrar, necesitará Font Awesome #}
+                        </button>
+                    </div> {# FIN DEL CAMBIO #}
                 </div>
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-warning">Iniciar Sesión</button>
@@ -25,4 +29,24 @@
         </div>
     </div>
 </div>
+
+{# Script JavaScript para la funcionalidad de mostrar/ocultar contraseña #}
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+
+    togglePassword.addEventListener('click', function (e) {
+        // Alternar el tipo entre 'password' y 'text'
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+
+        // Cambiar el icono del ojo
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+</script>
+
+{# Necesitas Font Awesome para los iconos de ojo. Añade esto en <head> de base.html #}
+{# <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> #}
+
 {% endblock %}
