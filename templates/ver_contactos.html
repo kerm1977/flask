@@ -37,6 +37,17 @@
             <div class="card shadow-lg p-4">
                 <h2 class="card-title text-center mb-4 text-warning">Lista de Contactos</h2>
 
+                {# Formulario de búsqueda #}
+                <div class="mb-4">
+                    <form action="{{ url_for('contactos.ver_contactos') }}" method="GET" class="d-flex">
+                        <input type="text" class="form-control me-2" name="search_query" placeholder="Buscar por nombre, teléfono, email, empresa, etc." value="{{ search_query if search_query else '' }}">
+                        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+                        {% if search_query %}
+                            <a href="{{ url_for('contactos.ver_contactos') }}" class="btn btn-outline-secondary ms-2">Limpiar</a>
+                        {% endif %}
+                    </form>
+                </div>
+
                 <div class="table-responsive"> {# Hace la tabla responsive en pantallas pequeñas #}
                     <table class="table table-hover table-striped"> {# Clases de Bootstrap para tablas #}
                         <thead class="table-dark"> {# Encabezado de tabla oscuro #}
@@ -72,7 +83,11 @@
                             {% else %}
                                 <tr>
                                     <td colspan="4" class="text-center py-4">
-                                        No hay contactos para mostrar.
+                                        {% if search_query %}
+                                            No se encontraron contactos para la búsqueda "{{ search_query }}".
+                                        {% else %}
+                                            No hay contactos para mostrar.
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endif %}
@@ -90,9 +105,9 @@
     </div>
 </div>
 
-{# Botón flotante para añadir nuevo contacto (NUEVO) #}
+{# Botón flotante para añadir nuevo contacto #}
 <div class="fab-container">
-    <a href="{{ url_for('register') }}" class="btn btn-warning fab-button" title="Agregar nuevo contacto"> {# CAMBIO AQUÍ: btn-primary a btn-warning #}
+    <a href="{{ url_for('register') }}" class="btn btn-warning fab-button" title="Agregar nuevo contacto">
         <i class="fas fa-plus"></i>
     </a>
 </div>

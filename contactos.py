@@ -4,6 +4,7 @@ from datetime import datetime # Necesario para actualizar fecha_actualizacion
 from werkzeug.utils import secure_filename
 import os # Necesario para path.join y unlink
 import io # Para manejar archivos en memoria
+from sqlalchemy import or_ # Necesario para la búsqueda "OR" en la base de datos
 
 # Librerías para exportación
 import vobject # Para vCard
@@ -12,7 +13,6 @@ import openpyxl # Para Excel (asegúrate de haberlo instalado con pip install op
 # Supongamos que UPLOAD_FOLDER y ALLOWED_EXTENSIONS están en config.py o directamente en app.py
 # Para que este Blueprint funcione de forma independiente sin importar directamente de app,
 # podríamos pasarlos como argumento al Blueprint, o definirlos aquí si son específicos.
-# Por simplicidad para esta respuesta, los definiremos aquí asumiendo que son globales o se ajustan.
 # En una app real, es mejor importarlos de un archivo de configuración.
 UPLOAD_FOLDER = os.path.join('static', 'uploads', 'avatars') # Ruta relativa para url_for
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -31,17 +31,42 @@ contactos_bp = Blueprint('contactos', __name__, url_prefix='/contactos')
 @contactos_bp.route('/ver_contactos')
 def ver_contactos():
     """
-    Muestra una lista de todos los usuarios registrados.
+    Muestra una lista de todos los usuarios registrados, con funcionalidad de búsqueda.
     Requiere que el usuario esté logueado.
     """
     if 'logged_in' not in session or not session['logged_in']:
         flash('Por favor, inicia sesión para acceder a esta página.', 'info')
         return redirect(url_for('login'))
 
+    search_query = request.args.get('search_query', '').strip() # Obtener el término de búsqueda
+
     try:
-        # Obtenemos todos los usuarios de la base de datos
-        all_users = User.query.all()
-        return render_template('ver_contactos.html', users=all_users)
+        query = User.query
+        
+        if search_query:
+            # Construir la condición de búsqueda para cada campo relevante
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    User.username.ilike(search_pattern),
+                    User.nombre.ilike(search_pattern),
+                    User.primer_apellido.ilike(search_pattern),
+                    User.segundo_apellido.ilike(search_pattern),
+                    User.telefono.ilike(search_pattern),
+                    User.email.ilike(search_pattern),
+                    User.telefono_emergencia.ilike(search_pattern),
+                    User.nombre_emergencia.ilike(search_pattern),
+                    User.empresa.ilike(search_pattern),
+                    User.cedula.ilike(search_pattern),
+                    User.direccion.ilike(search_pattern),
+                    User.actividad.ilike(search_pattern),
+                    User.capacidad.ilike(search_pattern),
+                    User.participacion.ilike(search_pattern)
+                )
+            )
+        
+        all_users = query.all() # Ejecutar la consulta (con o sin filtro)
+        return render_template('ver_contactos.html', users=all_users, search_query=search_query)
     except Exception as e:
         flash(f'Error al cargar los contactos: {e}', 'danger')
         return redirect(url_for('home'))
@@ -308,7 +333,7 @@ def exportar_excel(user_id):
         download_name=f'{user.username}_contacto.xlsx'
     )
 
-# Ruta: Exportar TODOS los contactos a Excel (MODIFICADA)
+# Ruta: Exportar TODOS los contactos a Excel (Formato de lista)
 @contactos_bp.route('/exportar_todos_excel')
 def exportar_todos_excel():
     """
@@ -325,7 +350,7 @@ def exportar_todos_excel():
         sheet = workbook.active
         sheet.title = "Todos los Contactos"
 
-        # Nuevos encabezados de las columnas para el formato de lista
+        # Encabezados de las columnas para el formato de lista
         headers = [
             "Nombre de Usuario", "Nombre", "Primer Apellido", "Segundo Apellido",
             "Teléfono", "Email", "Teléfono Emergencia", "Nombre Contacto Emergencia",
