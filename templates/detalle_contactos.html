@@ -102,12 +102,37 @@
                 </div>
 
                 <div class="text-center mt-4">
-                    <a href="{{ url_for('contactos.ver_contactos') }}" class="btn btn-warning btn-lg">
+                    <a href="{{ url_for('contactos.ver_contactos') }}" class="btn btn-warning btn-lg me-2">
                         Volver a la Lista de Contactos
                     </a>
+                    <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                        Eliminar Contacto
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar a **{{ user.nombre }} {{ user.primer_apellido }}** (@{{ user.username }})?</p>
+                <p>Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('contactos.eliminar_contacto', user_id=user.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
