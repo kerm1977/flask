@@ -151,9 +151,14 @@
                             Exportar Contacto
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><h6 class="dropdown-header">Exportar Contacto Actual</h6></li> {# Encabezado para claridad #}
                             <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_vcard', user_id=user.id) }}">Exportar VCard (.vcf)</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_excel', user_id=user.id) }}">Exportar Excel (.xlsx)</a></li>
                             <li><a class="dropdown-item" href="#" id="exportJpgBtn">Exportar JPG (.jpg)</a></li>
+                            <li><hr class="dropdown-divider"></li> {# Divisor #}
+                            <li><h6 class="dropdown-header">Exportar Múltiples Contactos</h6></li> {# Otro encabezado #}
+                            {# NUEVO ENLACE: Exportar todos los contactos a Excel #}
+                            <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_todos_excel') }}">Exportar Todos a Excel (.xlsx)</a></li>
                         </ul>
                     </div>
                 </div>

@@ -205,7 +205,6 @@ def exportar_vcard(user_id):
     if user.telefono_emergencia:
         tel_emergencia = card.add('tel')
         tel_emergencia.type_param = 'WORK' # O un tipo más apropiado
-        # ¡CORRECCIÓN APLICADA AQUÍ! Usar .params para asignar la lista
         tel_emergencia.params['X-LABEL'] = ['Emergencia'] 
         tel_emergencia.value = user.telefono_emergencia
 
@@ -219,9 +218,6 @@ def exportar_vcard(user_id):
     if user.direccion:
         adr = card.add('adr')
         adr.type_param = 'HOME'
-        # Es posible que necesites ajustar la forma en que vobject.vcard.Address maneja
-        # una cadena simple de dirección si no se ajusta a sus campos específicos.
-        # Para direcciones simples, a veces se puede poner todo en un campo:
         adr.value = vobject.vcard.Address(street=user.direccion) 
         
     # Empresa
@@ -244,7 +240,6 @@ def exportar_vcard(user_id):
 
     # Fecha de actualización (opcional)
     if user.fecha_actualizacion:
-        # vobject espera un formato específico para REV, isoformat() es una buena opción.
         card.add('rev').value = user.fecha_actualizacion.isoformat()
 
     vcf_data = card.serialize()
@@ -313,24 +308,64 @@ def exportar_excel(user_id):
         download_name=f'{user.username}_contacto.xlsx'
     )
 
-@contactos_bp.route('/exportar_jpg/<int:user_id>')
-def exportar_jpg(user_id):
+# NUEVA RUTA: Exportar TODOS los contactos a Excel
+@contactos_bp.route('/exportar_todos_excel')
+def exportar_todos_excel():
     """
-    Informa sobre la complejidad de la exportación a JPG desde el servidor.
+    Exporta los datos de TODOS los contactos a un archivo Excel (.xlsx).
     """
     if 'logged_in' not in session or not session['logged_in']:
-        flash('Por favor, inicia sesión para exportar contactos.', 'info')
+        flash('Por favor, inicia sesión para exportar todos los contactos.', 'info')
         return redirect(url_for('login'))
-    
-    user = User.query.get_or_404(user_id)
 
-    flash(
-        f'La exportación a JPG de la página de detalles de {user.username} es compleja '
-        'desde el lado del servidor, ya que requiere un renderizado de navegador sin cabeza '
-        'o librerías avanzadas que no están fácilmente disponibles en este entorno. '
-        'Considera usar una solución de JavaScript en el frontend (como html2canvas) para esta funcionalidad.',
-        'info'
-    )
-    # Redirige de nuevo a la página de detalle del contacto
-    return redirect(url_for('contactos.ver_detalle', user_id=user.id))
+    try:
+        all_users = User.query.all()
 
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = "Todos los Contactos"
+
+        # Encabezados de las columnas para todos los usuarios
+        headers = [
+            "Nombre de Usuario", "Nombre", "Primer Apellido", "Segundo Apellido",
+            "Teléfono", "Email", "Teléfono Emergencia", "Nombre Contacto Emergencia",
+            "Empresa", "Cédula", "Dirección", "Actividad", "Capacidad", "Participación",
+            "Fecha de Registro", "Última Actualización"
+        ]
+        sheet.append(headers)
+
+        # Iterar sobre cada usuario y añadir sus datos
+        for user in all_users:
+            row_data = [
+                str(user.username),
+                str(user.nombre),
+                str(user.primer_apellido),
+                str(user.segundo_apellido) if user.segundo_apellido else "",
+                str(user.telefono),
+                str(user.email) if user.email else "",
+                str(user.telefono_emergencia) if user.telefono_emergencia else "",
+                str(user.nombre_emergencia) if user.nombre_emergencia else "",
+                str(user.empresa) if user.empresa else "",
+                str(user.cedula) if user.cedula else "",
+                str(user.direccion) if user.direccion else "",
+                str(user.actividad) if user.actividad else "",
+                str(user.capacidad) if user.capacidad else "",
+                str(user.participacion) if user.participacion else "",
+                user.fecha_registro.strftime('%d/%m/%Y %H:%M'),
+                user.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') if user.fecha_actualizacion else "N/A"
+            ]
+            sheet.append(row_data)
+
+        buffer = io.BytesIO()
+        workbook.save(buffer)
+        buffer.seek(0)
+
+        return send_file(
+            buffer,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='todos_los_contactos.xlsx'
+        )
+    except Exception as e:
+        flash(f'Error al exportar todos los contactos a Excel: {e}', 'danger')
+        return redirect(url_for('contactos.ver_contactos')) # Redirige a la lista de contactos
