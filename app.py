@@ -52,7 +52,7 @@ def register():
         nombre_emergencia = request.form.get('nombre_emergencia')
         empresa = request.form.get('empresa')
         cedula = request.form.get('cedula')
-        direccion = request.form.get('notas')
+        direccion = request.form.get('direccion')
         email = request.form.get('email')
         actividad = request.form.get('actividad')
         capacidad = request.form.get('capacidad')
@@ -117,7 +117,13 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             flash('¡Registro exitoso! Ahora puedes iniciar sesión.', 'success')
-            return redirect(url_for('login'))
+            
+            # CAMBIO AQUÍ: Redirigir según el estado de la sesión
+            if 'logged_in' in session and session['logged_in']:
+                return redirect(url_for('contactos.ver_contactos'))
+            else:
+                return redirect(url_for('login'))
+
         except Exception as e:
             db.session.rollback()
             flash(f'Error al registrar usuario: {e}', 'danger')
