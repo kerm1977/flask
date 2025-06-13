@@ -6,7 +6,7 @@
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-9 col-lg-8">
-            <div class="card shadow-lg p-4">
+            <div class="card shadow-lg p-4" id="contact-details-card"> {# AÑADIR ID A LA TARJETA #}
                 <h2 class="card-title text-center mb-4 text-warning">Detalles del Contacto</h2>
                 
                 <div class="text-center mb-4">
@@ -127,7 +127,8 @@
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_vcard', user_id=user.id) }}">Exportar VCard (.vcf)</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_excel', user_id=user.id) }}">Exportar Excel (.xlsx)</a></li>
-                            <li><a class="dropdown-item disabled" href="#" title="La exportación a JPG desde el servidor es compleja y no está implementada directamente.">Exportar JPG (No disponible)</a></li>
+                            {# CAMBIO AQUÍ: Enlace a JS para exportar JPG #}
+                            <li><a class="dropdown-item" href="#" id="exportJpgBtn">Exportar JPG (.jpg)</a></li>
                         </ul>
                     </div>
                 </div>
@@ -158,5 +159,43 @@
         </div>
     </div>
 </div>
+
+{# Script para html2canvas para exportar a JPG #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportJpgBtn = document.getElementById('exportJpgBtn');
+        if (exportJpgBtn) {
+            exportJpgBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Evita que el enlace recargue la página
+
+                const cardElement = document.getElementById('contact-details-card'); // Elemento a capturar
+                if (cardElement) {
+                    html2canvas(cardElement, {
+                        scale: 2, // Aumenta la resolución de la captura
+                        useCORS: true, // Importante si hay imágenes de diferentes orígenes
+                        logging: false // Deshabilita los logs en consola
+                    }).then(function(canvas) {
+                        const link = document.createElement('a');
+                        link.download = 'contacto_{{ user.username }}.jpg'; // Nombre del archivo
+                        link.href = canvas.toDataURL('image/jpeg', 0.9); // Calidad 90% para JPG
+                        document.body.appendChild(link);
+                        link.click(); // Simula un clic en el enlace para descargar
+                        document.body.removeChild(link);
+                    }).catch(err => {
+                        console.error('Error al generar la imagen JPG:', err);
+                        // Aquí podrías mostrar un mensaje al usuario con Flask Flash
+                        // o un simple alert, aunque evitamos alerts en general.
+                        // Para este caso, un flash en el frontend sería más complejo sin un refresh.
+                        // Para simplicidad, se loguea en consola.
+                        alert('Hubo un error al exportar la imagen. Por favor, inténtalo de nuevo.');
+                    });
+                } else {
+                    console.error('No se encontró el elemento con ID "contact-details-card".');
+                }
+            });
+        }
+    });
+</script>
 
 {% endblock %}
