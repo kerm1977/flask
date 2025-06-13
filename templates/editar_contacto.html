@@ -38,7 +38,7 @@
                         <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" value="{{ user.primer_apellido }}" required>
                     </div>
 
-                    {# Segundo Apellido #}
+                    {# Segundo Apellido (Opcional) #}
                     <div class="mb-3">
                         <label for="segundo_apellido" class="form-label">Segundo Apellido</label>
                         <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" value="{{ user.segundo_apellido if user.segundo_apellido else '' }}">
@@ -52,20 +52,20 @@
 
                     {# Email #}
                     <div class="mb-3">
-                        <label for="email" class="form-label">Correo Electrónico</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user.email else '' }}">
+                        <label for="email" class="form-label">Correo Electrónico *</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
                     </div>
 
                     {# Teléfono #}
                     <div class="mb-3">
                         <label for="telefono" class="form-label">Teléfono *</label>
-                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ user.telefono }}" required>
+                        <input type="tel" class="form-control" id="telefono" name="telefono" value="{{ user.telefono }}" required>
                     </div>
 
                     {# Teléfono de Emergencia #}
                     <div class="mb-3">
                         <label for="telefono_emergencia" class="form-label">Teléfono de Emergencia</label>
-                        <input type="text" class="form-control" id="telefono_emergencia" name="telefono_emergencia" value="{{ user.telefono_emergencia if user.telefono_emergencia else '' }}">
+                        <input type="tel" class="form-control" id="telefono_emergencia" name="telefono_emergencia" value="{{ user.telefono_emergencia if user.telefono_emergencia else '' }}">
                     </div>
 
                     {# Nombre de Contacto de Emergencia #}
@@ -89,25 +89,77 @@
                     {# Dirección #}
                     <div class="mb-3">
                         <label for="direccion" class="form-label">Dirección</label>
-                        <input type="text" class="form-control" id="direccion" name="direccion" value="{{ user.direccion if user.direccion else '' }}">
+                        <textarea class="form-control" id="direccion" name="direccion" rows="3">{{ user.direccion if user.direccion else '' }}</textarea>
                     </div>
 
-                    {# Actividad #}
+                    {# Fecha de Cumpleaños #}
+                    <div class="mb-3">
+                        <label for="fecha_cumpleanos" class="form-label">Fecha de Cumpleaños</label>
+                        <input type="date" class="form-control" id="fecha_cumpleanos" name="fecha_cumpleanos" value="{{ user.fecha_cumpleanos.strftime('%Y-%m-%d') if user.fecha_cumpleanos else '' }}">
+                    </div>
+
+                    {# Tipo de Sangre #}
+                    <div class="mb-3">
+                        <label for="tipo_sangre" class="form-label">Tipo de Sangre</label>
+                        <select class="form-select" id="tipo_sangre" name="tipo_sangre">
+                            {% for option in tipo_sangre_opciones %}
+                                <option value="{{ option }}" {% if option == (request.form.get('tipo_sangre') or user.tipo_sangre) %}selected{% endif %}>{{ option }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {# Póliza #}
+                    <div class="mb-3">
+                        <label for="poliza" class="form-label">Póliza</label>
+                        <input type="text" class="form-control" id="poliza" name="poliza" value="{{ user.poliza if user.poliza else '' }}">
+                    </div>
+
+                    {# Aseguradora #}
+                    <div class="mb-3">
+                        <label for="aseguradora" class="form-label">Aseguradora</label>
+                        <input type="text" class="form-control" id="aseguradora" name="aseguradora" value="{{ user.aseguradora if user.aseguradora else '' }}">
+                    </div>
+
+                    {# Alergias #}
+                    <div class="mb-3">
+                        <label for="alergias" class="form-label">Alergias</label>
+                        <textarea class="form-control" id="alergias" name="alergias" rows="3">{{ user.alergias if user.alergias else '' }}</textarea>
+                    </div>
+
+                    {# Enfermedades Crónicas #}
+                    <div class="mb-3">
+                        <label for="enfermedades_cronicas" class="form-label">Enfermedades Crónicas</label>
+                        <textarea class="form-control" id="enfermedades_cronicas" name="enfermedades_cronicas" rows="3">{{ user.enfermedades_cronicas if user.enfermedades_cronicas else '' }}</textarea>
+                    </div>
+                    
+                    {# Actividad - CAMBIO A SELECT #}
                     <div class="mb-3">
                         <label for="actividad" class="form-label">Actividad</label>
-                        <input type="text" class="form-control" id="actividad" name="actividad" value="{{ user.actividad if user.actividad else '' }}">
+                        <select class="form-select" id="actividad" name="actividad">
+                            {% for option in actividad_opciones %}
+                                <option value="{{ option }}" {% if option == (request.form.get('actividad') or user.actividad) %}selected{% endif %}>{{ option }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
 
-                    {# Capacidad #}
+                    {# Capacidad - CAMBIO A SELECT #}
                     <div class="mb-3">
                         <label for="capacidad" class="form-label">Capacidad</label>
-                        <input type="text" class="form-control" id="capacidad" name="capacidad" value="{{ user.capacidad if user.capacidad else '' }}">
+                        <select class="form-select" id="capacidad" name="capacidad">
+                            {% for option in capacidad_opciones %}
+                                <option value="{{ option }}" {% if option == (request.form.get('capacidad') or user.capacidad) %}selected{% endif %}>{{ option }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
 
-                    {# Participación #}
+                    {# Participación - CAMBIO A SELECT #}
                     <div class="mb-3">
                         <label for="participacion" class="form-label">Participación</label>
-                        <input type="text" class="form-control" id="participacion" name="participacion" value="{{ user.participacion if user.participacion else '' }}">
+                        <select class="form-select" id="participacion" name="participacion">
+                            {% for option in participacion_opciones %}
+                                <option value="{{ option }}" {% if option == (request.form.get('participacion') or user.participacion) %}selected{% endif %}>{{ option }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     
                     <div class="d-grid gap-2 mt-4">

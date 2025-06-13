@@ -61,7 +61,13 @@ def ver_contactos():
                     User.direccion.ilike(search_pattern),
                     User.actividad.ilike(search_pattern),
                     User.capacidad.ilike(search_pattern),
-                    User.participacion.ilike(search_pattern)
+                    User.participacion.ilike(search_pattern),
+                    # NUEVOS CAMPOS EN BÚSQUEDA
+                    User.tipo_sangre.ilike(search_pattern),
+                    User.poliza.ilike(search_pattern),
+                    User.aseguradora.ilike(search_pattern),
+                    User.alergias.ilike(search_pattern),
+                    User.enfermedades_cronicas.ilike(search_pattern)
                 )
             )
         
@@ -136,6 +142,13 @@ def editar_contacto(user_id):
 
     user = User.query.get_or_404(user_id)
 
+    # DEFINICIÓN DE LAS OPCIONES: Añadidas aquí para que estén disponibles
+    actividad_opciones = ["No Aplica", "La Tribu", "Senderista", "Enfermería", "Cocina", "Confección y Diseño", "Restaurante", "Transporte Terrestre", "Transporte Acuatico", "Transporte Aereo", "Migración", "Parque Nacional", "Refugio Silvestre", "Centro de Atracción", "Lugar para Caminata", "Acarreo", "Oficina de trámite", "Primeros Auxilios", "Farmacia", "Taller", "Abogado", "Mensajero", "Tienda", "Polizas", "Aerolínea", "Guía", "Banco", "Otros"]
+    capacidad_opciones = ["Seleccionar Capacidad", "Rápido", "Intermedio", "Básico", "Iniciante"]
+    participacion_opciones = ["No Aplica", "Solo de La Tribu", "Constante", "Inconstante", "El Camino de Costa Rica", "Parques Nacionales", "Paseo | Recreativo", "Revisar/Eliminar"]
+    tipo_sangre_opciones = ["Seleccionar Tipo", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+
+
     if request.method == 'POST':
         try:
             # Actualizar campos obligatorios
@@ -153,10 +166,35 @@ def editar_contacto(user_id):
             user.empresa = request.form.get('empresa')
             user.cedula = request.form.get('cedula')
             user.direccion = request.form.get('direccion')
-            user.actividad = request.form.get('actividad')
-            user.capacidad = request.form.get('capacidad')
-            user.participacion = request.form.get('participacion')
             
+            # Capturar valores de los select y asignarlos
+            # ASIGNACIÓN DE VALORES DE SELECT: Asegurando que se guarden correctamente
+            actividad = request.form.get('actividad')
+            user.actividad = actividad if actividad != "No Aplica" else None
+
+            capacidad = request.form.get('capacidad')
+            user.capacidad = capacidad if capacidad != "Seleccionar Capacidad" else None
+
+            participacion = request.form.get('participacion')
+            user.participacion = participacion if participacion != "No Aplica" else None
+
+            # NUEVOS CAMPOS: Actualizar desde el formulario
+            fecha_cumpleanos_str = request.form.get('fecha_cumpleanos')
+            if fecha_cumpleanos_str:
+                # Asegúrate de que user.fecha_cumpleanos sea un objeto date
+                user.fecha_cumpleanos = datetime.strptime(fecha_cumpleanos_str, '%Y-%m-%d').date()
+            else:
+                user.fecha_cumpleanos = None # Permitir limpiar el campo
+
+            user.tipo_sangre = request.form.get('tipo_sangre')
+            if user.tipo_sangre == "Seleccionar Tipo": # Si no se seleccionó un tipo específico
+                user.tipo_sangre = None
+
+            user.poliza = request.form.get('poliza')
+            user.aseguradora = request.form.get('aseguradora')
+            user.alergias = request.form.get('alergias')
+            user.enfermedades_cronicas = request.form.get('enfermedades_cronicas')
+
             # Manejo del avatar
             if 'avatar' in request.files:
                 file = request.files['avatar']
@@ -186,9 +224,14 @@ def editar_contacto(user_id):
             # Si el error es de username duplicado, podríamos ser más específicos
             if 'UNIQUE constraint failed' in str(e) and 'username' in str(e):
                 flash('El nombre de usuario ya está en uso. Por favor, elige otro.', 'danger')
-            return render_template('editar_contacto.html', user=user)
+            # PASAR LAS OPCIONES EN CASO DE ERROR: crucial para que el formulario se muestre con las opciones
+            return render_template('editar_contacto.html', user=user, 
+                                   actividad_opciones=actividad_opciones, 
+                                   capacidad_opciones=capacidad_opciones, 
+                                   participacion_opciones=participacion_opciones,
+                                   tipo_sangre_opciones=tipo_sangre_opciones)
 
-    # Si es un GET request, simplemente renderiza el formulario con los datos actuales del usuario
+    # SI ES UN GET REQUEST: Asegurarse de pasar las opciones también
     avatar_url = None
     if user.avatar_url:
         with current_app.app_context():
@@ -197,8 +240,12 @@ def editar_contacto(user_id):
         with current_app.app_context():
             avatar_url = url_for('static', filename='images/defaults/default_avatar.png')
 
-    return render_template('editar_contacto.html', user=user, avatar_url=avatar_url)
-
+    # PASAR LAS OPCIONES EN EL GET REQUEST: Asegurando que estén disponibles al cargar la página
+    return render_template('editar_contacto.html', user=user, avatar_url=avatar_url,
+                           actividad_opciones=actividad_opciones, 
+                           capacidad_opciones=capacidad_opciones, 
+                           participacion_opciones=participacion_opciones,
+                           tipo_sangre_opciones=tipo_sangre_opciones)
 
 # Rutas de Exportación (Individual)
 @contactos_bp.route('/exportar_vcard/<int:user_id>')
@@ -255,15 +302,13 @@ def exportar_vcard(user_id):
     if user.cedula:
         card.add('note').value = f"Cédula: {user.cedula}"
     
-    # URL de avatar (opcional, algunos clientes vCard lo soportan)
     if user.avatar_url and 'default_avatar.png' not in user.avatar_url:
         with current_app.app_context():
             full_avatar_url = url_for('static', filename=user.avatar_url, _external=True)
             photo = card.add('photo')
             photo.value = full_avatar_url
-            photo.type_param = 'URI' # Indica que es una URL
+            photo.type_param = 'URI'
 
-    # Fecha de actualización (opcional)
     if user.fecha_actualizacion:
         card.add('rev').value = user.fecha_actualizacion.isoformat()
 
@@ -473,4 +518,3 @@ def exportar_todos_vcard():
     except Exception as e:
         flash(f'Error al exportar todos los contactos a VCard: {e}', 'danger')
         return redirect(url_for('contactos.ver_contactos'))
-

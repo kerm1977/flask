@@ -22,25 +22,25 @@
                 {# Nombre #}
                 <div class="mb-3">
                     <label for="nombre" class="form-label">Nombre *</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    <input type="text" class="form-control" id="nombre" name="nombre" value="{{ request.form.get('nombre', '') }}" required>
                 </div>
 
                 {# Primer Apellido #}
                 <div class="mb-3">
                     <label for="primer_apellido" class="form-label">Primer Apellido *</label>
-                    <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" required>
+                    <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" value="{{ request.form.get('primer_apellido', '') }}" required>
                 </div>
 
                 {# Segundo Apellido (Opcional) #}
                 <div class="mb-3">
                     <label for="segundo_apellido" class="form-label">Segundo Apellido (Opcional)</label>
-                    <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido">
+                    <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" value="{{ request.form.get('segundo_apellido', '') }}">
                 </div>
 
                 {# Usuario de Registro (obligatorio) #}
                 <div class="mb-3">
                     <label for="username_registro" class="form-label">Usuario de Registro *</label>
-                    <input type="text" class="form-control" id="username_registro" name="username_registro" required>
+                    <input type="text" class="form-control" id="username_registro" name="username_registro" value="{{ request.form.get('username_registro', '') }}" required>
                 </div>
 
                 {# Password (obligatorio) #}
@@ -68,51 +68,95 @@
                 {# Teléfono (obligatorio) #}
                 <div class="mb-3">
                     <label for="telefono" class="form-label">Teléfono *</label>
-                    <input type="tel" class="form-control" id="telefono" name="telefono" required>
+                    <input type="tel" class="form-control" id="telefono" name="telefono" value="{{ request.form.get('telefono', '') }}" required>
                 </div>
 
                 {# Teléfono de Emergencia (Opcional) #}
                 <div class="mb-3">
                     <label for="telefono_emergencia" class="form-label">Teléfono de Emergencia (Opcional)</label>
-                    <input type="tel" class="form-control" id="telefono_emergencia" name="telefono_emergencia">
+                    <input type="tel" class="form-control" id="telefono_emergencia" name="telefono_emergencia" value="{{ request.form.get('telefono_emergencia', '') }}">
                 </div>
 
                 {# Nombre Emergencia (Opcional) #}
                 <div class="mb-3">
                     <label for="nombre_emergencia" class="form-label">Nombre de Contacto de Emergencia (Opcional)</label>
-                    <input type="text" class="form-control" id="nombre_emergencia" name="nombre_emergencia">
+                    <input type="text" class="form-control" id="nombre_emergencia" name="nombre_emergencia" value="{{ request.form.get('nombre_emergencia', '') }}">
                 </div>
 
                 {# Empresa (Opcional) #}
                 <div class="mb-3">
                     <label for="empresa" class="form-label">Empresa (Opcional)</label>
-                    <input type="text" class="form-control" id="empresa" name="empresa">
+                    <input type="text" class="form-control" id="empresa" name="empresa" value="{{ request.form.get('empresa', '') }}">
                 </div>
 
                 {# Cédula (Opcional) #}
                 <div class="mb-3">
                     <label for="cedula" class="form-label">Cédula (Opcional)</label>
-                    <input type="text" class="form-control" id="cedula" name="cedula">
+                    <input type="text" class="form-control" id="cedula" name="cedula" value="{{ request.form.get('cedula', '') }}">
                 </div>
 
-                {# Notas (Opcional) #}
+                {# Dirección (ya existía, pero lo incluyo para que esté completo) #}
                 <div class="mb-3">
-                    <label for="direccion" class="form-label">Notas (Opcional)</label>
-                    <textarea class="form-control" id="direccion" name="direccion" rows="3"></textarea>
+                    <label for="direccion" class="form-label">Dirección (Opcional)</label>
+                    <input type="text" class="form-control" id="direccion" name="direccion" value="{{ request.form.get('direccion', '') }}">
                 </div>
 
                 {# Email (Opcional) #}
                 <div class="mb-3">
                     <label for="email" class="form-label">Email (Opcional)</label>
-                    <input type="email" class="form-control" id="email" name="email">
+                    <input type="email" class="form-control" id="email" name="email" value="{{ request.form.get('email', '') }}">
                 </div>
+
+                {# NUEVOS CAMPOS #}
+
+                {# Fecha de Cumpleaños #}
+                <div class="mb-3">
+                    <label for="fecha_cumpleanos" class="form-label">Fecha de Cumpleaños (Opcional)</label>
+                    <input type="date" class="form-control" id="fecha_cumpleanos" name="fecha_cumpleanos" value="{{ request.form.get('fecha_cumpleanos', '') }}">
+                </div>
+
+                {# Tipo de Sangre #}
+                <div class="mb-3">
+                    <label for="tipo_sangre" class="form-label">Tipo de Sangre (Opcional)</label>
+                    <select class="form-select" id="tipo_sangre" name="tipo_sangre">
+                        {% for option in tipo_sangre_opciones %}
+                            <option value="{{ option }}" {% if option == request.form.get('tipo_sangre') %}selected{% elif loop.first and not request.form.get('tipo_sangre') %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Póliza #}
+                <div class="mb-3">
+                    <label for="poliza" class="form-label">Póliza (Opcional)</label>
+                    <input type="text" class="form-control" id="poliza" name="poliza" value="{{ request.form.get('poliza', '') }}">
+                </div>
+
+                {# Aseguradora #}
+                <div class="mb-3">
+                    <label for="aseguradora" class="form-label">Aseguradora (Opcional)</label>
+                    <input type="text" class="form-control" id="aseguradora" name="aseguradora" value="{{ request.form.get('aseguradora', '') }}">
+                </div>
+
+                {# Alergias #}
+                <div class="mb-3">
+                    <label for="alergias" class="form-label">Alergias (Opcional)</label>
+                    <textarea class="form-control" id="alergias" name="alergias" rows="3">{{ request.form.get('alergias', '') }}</textarea>
+                </div>
+
+                {# Enfermedades Crónicas #}
+                <div class="mb-3">
+                    <label for="enfermedades_cronicas" class="form-label">Enfermedades Crónicas (Opcional)</label>
+                    <textarea class="form-control" id="enfermedades_cronicas" name="enfermedades_cronicas" rows="3">{{ request.form.get('enfermedades_cronicas', '') }}</textarea>
+                </div>
+
+                {# FIN NUEVOS CAMPOS #}
 
                 {# Selector Actividad (Opcional) #}
                 <div class="mb-3">
                     <label for="actividad" class="form-label">Actividad (Opcional)</label>
                     <select class="form-select" id="actividad" name="actividad">
                         {% for option in actividad_opciones %}
-                            <option value="{{ option }}" {% if loop.first %}selected{% endif %}>{{ option }}</option>
+                            <option value="{{ option }}" {% if option == request.form.get('actividad') %}selected{% elif loop.first and not request.form.get('actividad') %}selected{% endif %}>{{ option }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -122,7 +166,7 @@
                     <label for="capacidad" class="form-label">Capacidad (Opcional)</label>
                     <select class="form-select" id="capacidad" name="capacidad">
                         {% for option in capacidad_opciones %}
-                            <option value="{{ option }}" {% if loop.first %}selected{% endif %}>{{ option }}</option>
+                            <option value="{{ option }}" {% if option == request.form.get('capacidad') %}selected{% elif loop.first and not request.form.get('capacidad') %}selected{% endif %}>{{ option }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -132,7 +176,7 @@
                     <label for="participacion" class="form-label">Participación (Opcional)</label>
                     <select class="form-select" id="participacion" name="participacion">
                         {% for option in participacion_opciones %}
-                            <option value="{{ option }}" {% if loop.first %}selected{% endif %}>{{ option }}</option>
+                            <option value="{{ option }}" {% if option == request.form.get('participacion') %}selected{% elif loop.first and not request.form.get('participacion') %}selected{% endif %}>{{ option }}</option>
                         {% endfor %}
                     </select>
                 </div>

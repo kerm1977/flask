@@ -100,6 +100,44 @@
                                 <span>{{ user.participacion }}</span>
                             </li>
                             {% endif %}
+                            {# NUEVOS CAMPOS A MOSTRAR #}
+                            {% if user.fecha_cumpleanos %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Fecha de Cumpleaños:</strong>
+                                <span>{{ user.fecha_cumpleanos.strftime('%d/%m/%Y') }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.tipo_sangre %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Tipo de Sangre:</strong>
+                                <span>{{ user.tipo_sangre }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.poliza %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Póliza:</strong>
+                                <span>{{ user.poliza }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.aseguradora %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Aseguradora:</strong>
+                                <span>{{ user.aseguradora }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.alergias %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Alergias:</strong>
+                                <span>{{ user.alergias }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.enfermedades_cronicas %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Enfermedades Crónicas:</strong>
+                                <span>{{ user.enfermedades_cronicas }}</span>
+                            </li>
+                            {% endif %}
+                            {# FIN NUEVOS CAMPOS #}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <strong>Fecha de Registro:</strong>
                                 <span>{{ user.fecha_registro.strftime('%d/%m/%Y %H:%M') }}</span>
@@ -158,7 +196,6 @@
                             <li><hr class="dropdown-divider"></li> {# Divisor #}
                             <li><h6 class="dropdown-header">Exportar Múltiples Contactos</h6></li> {# Otro encabezado #}
                             <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_todos_excel') }}">Exportar Todos a Excel (.xlsx)</a></li>
-                            {# NUEVO ENLACE: Exportar todos los contactos a VCard #}
                             <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_todos_vcard') }}">Exportar Todos a VCard (.vcf)</a></li>
                         </ul>
                     </div>
