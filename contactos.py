@@ -10,11 +10,9 @@ from sqlalchemy import or_ # Necesario para la búsqueda "OR" en la base de dato
 import vobject # Para vCard
 import openpyxl # Para Excel (asegúrate de haberlo instalado con pip install openpyxl)
 
-# Supongamos que UPLOAD_FOLDER y ALLOWED_EXTENSIONS están en config.py o directamente en app.py
-# Para que este Blueprint funcione de forma independiente sin importar directamente de app,
-# podríamos pasarlos como argumento al Blueprint, o definirlos aquí si son específicos.
-# En una app real, es mejor importarlos de un archivo de configuración.
-UPLOAD_FOLDER = os.path.join('static', 'uploads', 'avatars') # Ruta relativa para url_for
+# CORRECTO: Esta es la parte de la URL que se guarda en la DB (relativa a la carpeta 'static')
+# Y la que url_for('static', filename=...) espera
+AVATAR_UPLOAD_FOLDER_RELATIVE = os.path.join('uploads', 'avatars')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
@@ -116,9 +114,23 @@ def eliminar_contacto(user_id):
     try:
         # Opcional: Eliminar el archivo de avatar si no es el por defecto
         if user_to_delete.avatar_url and 'default_avatar.png' not in user_to_delete.avatar_url:
-            file_path = os.path.join(current_app.root_path, 'static', user_to_delete.avatar_url)
-            if os.path.exists(file_path):
-                os.unlink(file_path) # Elimina el archivo del sistema de archivos
+            # Asegurarse de que la ruta absoluta sea correcta para la eliminación
+            # user_to_delete.avatar_url ya contiene 'uploads/avatars/...' (después de esta corrección)
+            # o 'static/uploads/avatars/...' (como lo estaba guardando antes).
+            # Para mayor compatibilidad con ambos casos, construimos la ruta completa.
+            # La UPLOAD_FOLDER_RELATIVE es 'uploads/avatars'
+
+            # Para que funcione si avatar_url es 'uploads/avatars/...'
+            file_path_check_1 = os.path.join(current_app.root_path, 'static', user_to_delete.avatar_url)
+            # Para que funcione si avatar_url es 'static/uploads/avatars/...'
+            file_path_check_2 = os.path.join(current_app.root_path, user_to_delete.avatar_url)
+
+            if os.path.exists(file_path_check_1):
+                os.unlink(file_path_check_1)
+            elif os.path.exists(file_path_check_2):
+                os.unlink(file_path_check_2)
+            # else: archivo no encontrado o ya eliminado, no hay problema
+                
 
         db.session.delete(user_to_delete)
         db.session.commit()
@@ -168,7 +180,6 @@ def editar_contacto(user_id):
             user.direccion = request.form.get('direccion')
             
             # Capturar valores de los select y asignarlos
-            # ASIGNACIÓN DE VALORES DE SELECT: Asegurando que se guarden correctamente
             actividad = request.form.get('actividad')
             user.actividad = actividad if actividad != "No Aplica" else None
 
@@ -181,7 +192,6 @@ def editar_contacto(user_id):
             # NUEVOS CAMPOS: Actualizar desde el formulario
             fecha_cumpleanos_str = request.form.get('fecha_cumpleanos')
             if fecha_cumpleanos_str:
-                # Asegúrate de que user.fecha_cumpleanos sea un objeto date
                 user.fecha_cumpleanos = datetime.strptime(fecha_cumpleanos_str, '%Y-%m-%d').date()
             else:
                 user.fecha_cumpleanos = None # Permitir limpiar el campo
@@ -201,16 +211,23 @@ def editar_contacto(user_id):
                 if file.filename != '' and allowed_file(file.filename):
                     # Eliminar el avatar anterior si no es el por defecto
                     if user.avatar_url and 'default_avatar.png' not in user.avatar_url:
-                        old_avatar_path = os.path.join(current_app.root_path, 'static', user.avatar_url)
+                        # old_avatar_path = os.path.join(current_app.root_path, user.avatar_url) # Esto era lo que causaba el problema de duplicar 'static'
+                        
+                        # Corrección: Eliminar el archivo antiguo usando la ruta ABSOLUTA de app.config
+                        old_avatar_path = os.path.join(current_app.config['UPLOAD_FOLDER'], os.path.basename(user.avatar_url))
+                        
                         if os.path.exists(old_avatar_path):
                             os.unlink(old_avatar_path)
                     
                     # Guardar el nuevo avatar con un nombre seguro
                     filename = secure_filename(f"{user.username}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-                    file_path = os.path.join(current_app.root_path, UPLOAD_FOLDER, filename)
+                    
+                    # Usar la ruta de subida ABSOLUTA definida en app.py para guardar el archivo
+                    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
                     file.save(file_path)
-                    # Guardar la ruta relativa correcta en la base de datos
-                    user.avatar_url = os.path.join(UPLOAD_FOLDER, filename).replace('\\', '/')
+                    
+                    # Guardar la ruta relativa correcta en la base de datos (relativa a la carpeta 'static')
+                    user.avatar_url = os.path.join(AVATAR_UPLOAD_FOLDER_RELATIVE, filename).replace('\\', '/')
 
             # Actualizar la fecha de actualización
             user.fecha_actualizacion = datetime.utcnow()
@@ -224,7 +241,6 @@ def editar_contacto(user_id):
             # Si el error es de username duplicado, podríamos ser más específicos
             if 'UNIQUE constraint failed' in str(e) and 'username' in str(e):
                 flash('El nombre de usuario ya está en uso. Por favor, elige otro.', 'danger')
-            # PASAR LAS OPCIONES EN CASO DE ERROR: crucial para que el formulario se muestre con las opciones
             return render_template('editar_contacto.html', user=user, 
                                    actividad_opciones=actividad_opciones, 
                                    capacidad_opciones=capacidad_opciones, 
@@ -240,7 +256,6 @@ def editar_contacto(user_id):
         with current_app.app_context():
             avatar_url = url_for('static', filename='images/defaults/default_avatar.png')
 
-    # PASAR LAS OPCIONES EN EL GET REQUEST: Asegurando que estén disponibles al cargar la página
     return render_template('editar_contacto.html', user=user, avatar_url=avatar_url,
                            actividad_opciones=actividad_opciones, 
                            capacidad_opciones=capacidad_opciones, 
@@ -276,23 +291,20 @@ def exportar_vcard(user_id):
         tel.value = user.telefono
     if user.telefono_emergencia:
         tel_emergencia = card.add('tel')
-        tel_emergencia.type_param = 'WORK' # O un tipo más apropiado
+        tel_emergencia.type_param = 'WORK'
         tel_emergencia.params['X-LABEL'] = ['Emergencia'] 
         tel_emergencia.value = user.telefono_emergencia
 
-    # Email
     if user.email:
         email = card.add('email')
         email.type_param = 'INTERNET'
         email.value = user.email
 
-    # Dirección
     if user.direccion:
         adr = card.add('adr')
         adr.type_param = 'HOME'
         adr.value = vobject.vcard.Address(street=user.direccion) 
         
-    # Empresa
     if user.empresa:
         card.add('org').value = user.empresa
 
@@ -311,9 +323,14 @@ def exportar_vcard(user_id):
 
     if user.fecha_actualizacion:
         card.add('rev').value = user.fecha_actualizacion.isoformat()
+    
+    # Serializa cada vCard y añádelo a la lista
+    all_vcard_data.append(card.serialize())
+        
+    # Une todas las vCards en una sola cadena
+    final_vcf_content = "\n".join(all_vcard_data)
 
-    vcf_data = card.serialize()
-    buffer = io.BytesIO(vcf_data.encode('utf-8')) # Usamos BytesIO para send_file
+    buffer = io.BytesIO(final_vcf_content.encode('utf-8'))
 
     return send_file(
         buffer,
