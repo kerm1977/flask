@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Contacto{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg p-4">
+                <h2 class="card-title text-center mb-4 text-warning">Editar Contacto</h2>
+                
+                <form method="POST" action="{{ url_for('contactos.editar_contacto', user_id=user.id) }}" enctype="multipart/form-data">
+                    <p class="text-muted text-center">Los campos marcados con * son obligatorios.</p>
+
+                    {# Avatar Imagen #}
+                    <div class="mb-3 text-center">
+                        <label for="avatar" class="form-label d-block mb-2">Avatar Actual</label>
+                        <img src="{{ avatar_url }}" alt="Avatar de {{ user.username }}" 
+                             class="img-thumbnail rounded-circle mb-3" 
+                             style="width: 120px; height: 120px; object-fit: cover; border-color: #ffc107 !important;">
+                        
+                        <label for="avatar" class="form-label mt-3">Cambiar Avatar (Opcional)</label>
+                        <input class="form-control" type="file" id="avatar" name="avatar" accept="image/*">
+                        <div class="form-text">Sube una nueva imagen de perfil si deseas cambiarla.</div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    {# Nombre #}
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ user.nombre }}" required>
+                    </div>
+
+                    {# Primer Apellido #}
+                    <div class="mb-3">
+                        <label for="primer_apellido" class="form-label">Primer Apellido *</label>
+                        <input type="text" class="form-control" id="primer_apellido" name="primer_apellido" value="{{ user.primer_apellido }}" required>
+                    </div>
+
+                    {# Segundo Apellido #}
+                    <div class="mb-3">
+                        <label for="segundo_apellido" class="form-label">Segundo Apellido</label>
+                        <input type="text" class="form-control" id="segundo_apellido" name="segundo_apellido" value="{{ user.segundo_apellido if user.segundo_apellido else '' }}">
+                    </div>
+
+                    {# Username (para poder editarlo) #}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nombre de Usuario *</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+                    </div>
+
+                    {# Email #}
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user.email else '' }}">
+                    </div>
+
+                    {# Teléfono #}
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label">Teléfono *</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ user.telefono }}" required>
+                    </div>
+
+                    {# Teléfono de Emergencia #}
+                    <div class="mb-3">
+                        <label for="telefono_emergencia" class="form-label">Teléfono de Emergencia</label>
+                        <input type="text" class="form-control" id="telefono_emergencia" name="telefono_emergencia" value="{{ user.telefono_emergencia if user.telefono_emergencia else '' }}">
+                    </div>
+
+                    {# Nombre de Contacto de Emergencia #}
+                    <div class="mb-3">
+                        <label for="nombre_emergencia" class="form-label">Nombre Contacto Emergencia</label>
+                        <input type="text" class="form-control" id="nombre_emergencia" name="nombre_emergencia" value="{{ user.nombre_emergencia if user.nombre_emergencia else '' }}">
+                    </div>
+
+                    {# Empresa #}
+                    <div class="mb-3">
+                        <label for="empresa" class="form-label">Empresa</label>
+                        <input type="text" class="form-control" id="empresa" name="empresa" value="{{ user.empresa if user.empresa else '' }}">
+                    </div>
+
+                    {# Cédula #}
+                    <div class="mb-3">
+                        <label for="cedula" class="form-label">Cédula</label>
+                        <input type="text" class="form-control" id="cedula" name="cedula" value="{{ user.cedula if user.cedula else '' }}">
+                    </div>
+
+                    {# Dirección #}
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label">Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion" value="{{ user.direccion if user.direccion else '' }}">
+                    </div>
+
+                    {# Actividad #}
+                    <div class="mb-3">
+                        <label for="actividad" class="form-label">Actividad</label>
+                        <input type="text" class="form-control" id="actividad" name="actividad" value="{{ user.actividad if user.actividad else '' }}">
+                    </div>
+
+                    {# Capacidad #}
+                    <div class="mb-3">
+                        <label for="capacidad" class="form-label">Capacidad</label>
+                        <input type="text" class="form-control" id="capacidad" name="capacidad" value="{{ user.capacidad if user.capacidad else '' }}">
+                    </div>
+
+                    {# Participación #}
+                    <div class="mb-3">
+                        <label for="participacion" class="form-label">Participación</label>
+                        <input type="text" class="form-control" id="participacion" name="participacion" value="{{ user.participacion if user.participacion else '' }}">
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">Guardar Cambios</button>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('contactos.ver_detalle', user_id=user.id) }}" class="btn btn-secondary btn-sm">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

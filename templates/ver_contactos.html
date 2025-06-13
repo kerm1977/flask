@@ -1,61 +1,64 @@
 {% extends 'base.html' %}
 
-{% block title %}Iniciar Sesión{% endblock %}
+{% block title %}Ver Contactos{% endblock %} {# Cambiado el título para ser más descriptivo #}
 
 {% block content %}
-<body class="font-sans antialiased text-gray-800">
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <h1 class="text-3xl sm:text-4xl font-bold text-center text-indigo-700 mb-8">Lista de Contactos</h1>
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-9">
+            <div class="card shadow-lg p-4">
+                <h2 class="card-title text-center mb-4 text-warning">Lista de Contactos</h2>
 
-        <div class="bg-white shadow-xl rounded-lg overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Nombre
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Teléfono
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Acciones
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% if users %}
-                            {% for user in users %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ user.nombre }} {{ user.primer_apellido }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ user.telefono }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="{{ url_for('contactos.ver_detalle', user_id=user.id) }}" class="text-indigo-600 hover:text-indigo-900 button-link">Ver más</a>
+                <div class="table-responsive"> {# Hace la tabla responsive en pantallas pequeñas #}
+                    <table class="table table-hover table-striped"> {# Clases de Bootstrap para tablas #}
+                        <thead class="table-dark"> {# Encabezado de tabla oscuro #}
+                            <tr>
+                                <th scope="col" class="text-white">Avatar</th> {# Columna para el avatar #}
+                                <th scope="col" class="text-white">Nombre Completo</th>
+                                <th scope="col" class="text-white">Teléfono</th>
+                                <th scope="col" class="text-white text-center">Acciones</th> {# Centrar el texto #}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if users %}
+                                {% for user in users %}
+                                    <tr>
+                                        <td>
+                                            <img src="{{ url_for('static', filename=user.avatar_url if user.avatar_url else 'images/defaults/default_avatar.png') }}"
+                                                 alt="Avatar de {{ user.username }}"
+                                                 class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        </td>
+                                        <td>
+                                            <strong>{{ user.nombre }} {{ user.primer_apellido }} {{ user.segundo_apellido if user.segundo_apellido else '' }}</strong>
+                                            <br>
+                                            <small class="text-muted">@{{ user.username }}</small>
+                                        </td>
+                                        <td>{{ user.telefono }}</td>
+                                        <td class="text-center"> {# Centrar las acciones #}
+                                            <a href="{{ url_for('contactos.ver_detalle', user_id=user.id) }}" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye me-1"></i> Ver más
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        No hay contactos para mostrar.
                                     </td>
                                 </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="3" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                                    No hay contactos para mostrar.
-                                </td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('home') }}" class="btn btn-warning btn-lg">
+                        Volver a Inicio
+                    </a>
+                </div>
             </div>
         </div>
-
-        <div class="mt-8 text-center">
-            <a href="{{ url_for('home') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Volver a Inicio
-            </a>
-        </div>
     </div>
+</div>
 {% endblock %}

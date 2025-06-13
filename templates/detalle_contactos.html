@@ -97,23 +97,46 @@
                                 <strong>Fecha de Registro:</strong>
                                 <span>{{ user.fecha_registro.strftime('%d/%m/%Y %H:%M') }}</span>
                             </li>
+                            {% if user.fecha_actualizacion %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Última Actualización:</strong>
+                                <span>{{ user.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}</span>
+                            </li>
+                            {% endif %}
                         </ul>
                     </div>
                 </div>
 
-                <div class="text-center mt-4">
-                    <a href="{{ url_for('contactos.ver_contactos') }}" class="btn btn-warning btn-lg me-2">
+                <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+                    <a href="{{ url_for('contactos.ver_contactos') }}" class="btn btn-warning btn-lg">
                         Volver a la Lista de Contactos
                     </a>
+                    <a href="{{ url_for('contactos.editar_contacto', user_id=user.id) }}" class="btn btn-primary btn-lg">
+                        Editar Contacto
+                    </a>
+                    <!-- Botón que activa el modal de Bootstrap para confirmar la eliminación -->
                     <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                         Eliminar Contacto
                     </button>
+
+                    <!-- Menú desplegable para opciones de exportación (NUEVO) -->
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle btn-lg" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            Exportar Contacto
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_vcard', user_id=user.id) }}">Exportar VCard (.vcf)</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('contactos.exportar_excel', user_id=user.id) }}">Exportar Excel (.xlsx)</a></li>
+                            <li><a class="dropdown-item disabled" href="#" title="La exportación a JPG desde el servidor es compleja y no está implementada directamente.">Exportar JPG (No disponible)</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal de Confirmación de Eliminación -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -127,6 +150,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <!-- Formulario de eliminación dentro del modal. Al hacer clic en "Sí, Eliminar", se envía este formulario. -->
                 <form action="{{ url_for('contactos.eliminar_contacto', user_id=user.id) }}" method="POST" class="d-inline">
                     <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
                 </form>

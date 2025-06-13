@@ -20,6 +20,7 @@ class User(db.Model):
     primer_apellido = db.Column(db.String(100), nullable=False)
     telefono = db.Column(db.String(20), nullable=False)
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    fecha_actualizacion = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True) # NUEVO CAMPO AÑADIDO
 
     # Campos opcionales
     avatar_url = db.Column(db.String(255), default='images/defaults/default_avatar.png')
