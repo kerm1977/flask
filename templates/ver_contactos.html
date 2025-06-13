@@ -36,7 +36,7 @@
                                         <div class="text-sm text-gray-900">{{ user.telefono }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="#" class="text-indigo-600 hover:text-indigo-900 button-link">Ver más</a>
+                                        <a href="{{ url_for('contactos.ver_detalle', user_id=user.id) }}" class="text-indigo-600 hover:text-indigo-900 button-link">Ver más</a>
                                     </td>
                                 </tr>
                             {% endfor %}
