@@ -118,7 +118,7 @@ def eliminar_contacto(user_id):
             # user_to_delete.avatar_url ya contiene 'uploads/avatars/...' (después de esta corrección)
             # o 'static/uploads/avatars/...' (como lo estaba guardando antes).
             # Para mayor compatibilidad con ambos casos, construimos la ruta completa.
-            # La UPLOAD_FOLDER_RELATIVE es 'uploads/avatars'
+            # La AVATAR_UPLOAD_FOLDER_RELATIVE es 'uploads/avatars'
 
             # Para que funcione si avatar_url es 'uploads/avatars/...'
             file_path_check_1 = os.path.join(current_app.root_path, 'static', user_to_delete.avatar_url)
@@ -159,6 +159,8 @@ def editar_contacto(user_id):
     capacidad_opciones = ["Seleccionar Capacidad", "Rápido", "Intermedio", "Básico", "Iniciante"]
     participacion_opciones = ["No Aplica", "Solo de La Tribu", "Constante", "Inconstante", "El Camino de Costa Rica", "Parques Nacionales", "Paseo | Recreativo", "Revisar/Eliminar"]
     tipo_sangre_opciones = ["Seleccionar Tipo", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+    # Lista de provincias de Costa Rica en el orden solicitado
+    provincia_opciones = ["Cartago", "Limón", "Puntarenas", "San José", "Heredia", "Guanacaste", "Alajuela"]
 
 
     if request.method == 'POST':
@@ -177,7 +179,9 @@ def editar_contacto(user_id):
             user.nombre_emergencia = request.form.get('nombre_emergencia')
             user.empresa = request.form.get('empresa')
             user.cedula = request.form.get('cedula')
-            user.direccion = request.form.get('direccion')
+            # Capturar el valor de la provincia del select
+            provincia_seleccionada = request.form.get('direccion')
+            user.direccion = provincia_seleccionada if provincia_seleccionada else None # Guardar la provincia seleccionada
             
             # Capturar valores de los select y asignarlos
             actividad = request.form.get('actividad')
@@ -211,10 +215,8 @@ def editar_contacto(user_id):
                 if file.filename != '' and allowed_file(file.filename):
                     # Eliminar el avatar anterior si no es el por defecto
                     if user.avatar_url and 'default_avatar.png' not in user.avatar_url:
-                        # old_avatar_path = os.path.join(current_app.root_path, user.avatar_url) # Esto era lo que causaba el problema de duplicar 'static'
-                        
-                        # Corrección: Eliminar el archivo antiguo usando la ruta ABSOLUTA de app.config
-                        old_avatar_path = os.path.join(current_app.config['UPLOAD_FOLDER'], os.path.basename(user.avatar_url))
+                        old_avatar_filename = os.path.basename(user.avatar_url)
+                        old_avatar_path = os.path.join(current_app.config['UPLOAD_FOLDER'], old_avatar_filename)
                         
                         if os.path.exists(old_avatar_path):
                             os.unlink(old_avatar_path)
@@ -228,6 +230,15 @@ def editar_contacto(user_id):
                     
                     # Guardar la ruta relativa correcta en la base de datos (relativa a la carpeta 'static')
                     user.avatar_url = os.path.join(AVATAR_UPLOAD_FOLDER_RELATIVE, filename).replace('\\', '/')
+                # Si el usuario selecciona un archivo vacío (elimina la selección anterior) y no hay un nuevo archivo,
+                # y el avatar actual no es el por defecto, se puede restablecer a por defecto.
+                elif file.filename == '' and user.avatar_url and 'default_avatar.png' not in user.avatar_url:
+                    old_avatar_filename = os.path.basename(user.avatar_url)
+                    old_avatar_path = os.path.join(current_app.config['UPLOAD_FOLDER'], old_avatar_filename)
+                    if os.path.exists(old_avatar_path):
+                        os.unlink(old_avatar_path)
+                    user.avatar_url = 'images/defaults/default_avatar.png'
+
 
             # Actualizar la fecha de actualización
             user.fecha_actualizacion = datetime.utcnow()
@@ -245,7 +256,8 @@ def editar_contacto(user_id):
                                    actividad_opciones=actividad_opciones, 
                                    capacidad_opciones=capacidad_opciones, 
                                    participacion_opciones=participacion_opciones,
-                                   tipo_sangre_opciones=tipo_sangre_opciones)
+                                   tipo_sangre_opciones=tipo_sangre_opciones,
+                                   provincia_opciones=provincia_opciones) # Pasa las opciones en caso de error
 
     # SI ES UN GET REQUEST: Asegurarse de pasar las opciones también
     avatar_url = None
@@ -260,7 +272,8 @@ def editar_contacto(user_id):
                            actividad_opciones=actividad_opciones, 
                            capacidad_opciones=capacidad_opciones, 
                            participacion_opciones=participacion_opciones,
-                           tipo_sangre_opciones=tipo_sangre_opciones)
+                           tipo_sangre_opciones=tipo_sangre_opciones,
+                           provincia_opciones=provincia_opciones) # Pasa las opciones aquí también
 
 # Rutas de Exportación (Individual)
 @contactos_bp.route('/exportar_vcard/<int:user_id>')
@@ -274,70 +287,77 @@ def exportar_vcard(user_id):
 
     user = User.query.get_or_404(user_id)
 
-    card = vobject.vCard()
-    
-    # Nombre
-    card.add('n')
-    card.n.value = vobject.vcard.Name(family=user.primer_apellido, given=user.nombre, additional=user.segundo_apellido if user.segundo_apellido else '')
-    
-    # Nombre completo para pantalla
-    card.add('fn')
-    card.fn.value = f"{user.nombre} {user.primer_apellido} {user.segundo_apellido if user.segundo_apellido else ''}".strip()
+    # Inicializar all_vcard_data antes del bloque try/except
+    all_vcard_data = [] 
 
-    # Teléfono
-    if user.telefono:
-        tel = card.add('tel')
-        tel.type_param = 'CELL'
-        tel.value = user.telefono
-    if user.telefono_emergencia:
-        tel_emergencia = card.add('tel')
-        tel_emergencia.type_param = 'WORK'
-        tel_emergencia.params['X-LABEL'] = ['Emergencia'] 
-        tel_emergencia.value = user.telefono_emergencia
-
-    if user.email:
-        email = card.add('email')
-        email.type_param = 'INTERNET'
-        email.value = user.email
-
-    if user.direccion:
-        adr = card.add('adr')
-        adr.type_param = 'HOME'
-        adr.value = vobject.vcard.Address(street=user.direccion) 
+    try:
+        card = vobject.vCard()
         
-    if user.empresa:
-        card.add('org').value = user.empresa
-
-    # Otros campos que puedan tener sentido en un vCard (ej. TÍTULO, NOTAS, etc.)
-    if user.actividad:
-        card.add('title').value = user.actividad
-    if user.cedula:
-        card.add('note').value = f"Cédula: {user.cedula}"
-    
-    if user.avatar_url and 'default_avatar.png' not in user.avatar_url:
-        with current_app.app_context():
-            full_avatar_url = url_for('static', filename=user.avatar_url, _external=True)
-            photo = card.add('photo')
-            photo.value = full_avatar_url
-            photo.type_param = 'URI'
-
-    if user.fecha_actualizacion:
-        card.add('rev').value = user.fecha_actualizacion.isoformat()
-    
-    # Serializa cada vCard y añádelo a la lista
-    all_vcard_data.append(card.serialize())
+        # Nombre
+        card.add('n')
+        card.n.value = vobject.vcard.Name(family=user.primer_apellido, given=user.nombre, additional=user.segundo_apellido if user.segundo_apellido else '')
         
-    # Une todas las vCards en una sola cadena
-    final_vcf_content = "\n".join(all_vcard_data)
+        # Nombre completo para pantalla
+        card.add('fn')
+        card.fn.value = f"{user.nombre} {user.primer_apellido} {user.segundo_apellido if user.segundo_apellido else ''}".strip()
 
-    buffer = io.BytesIO(final_vcf_content.encode('utf-8'))
+        # Teléfono
+        if user.telefono:
+            tel = card.add('tel')
+            tel.type_param = 'CELL'
+            tel.value = user.telefono
+        if user.telefono_emergencia:
+            tel_emergencia = card.add('tel')
+            tel_emergencia.type_param = 'WORK'
+            tel_emergencia.params['X-LABEL'] = ['Emergencia'] 
+            tel_emergencia.value = user.telefono_emergencia
 
-    return send_file(
-        buffer,
-        mimetype='text/vcard',
-        as_attachment=True,
-        download_name=f'{user.username}.vcf'
-    )
+        if user.email:
+            email = card.add('email')
+            email.type_param = 'INTERNET'
+            email.value = user.email
+
+        if user.direccion:
+            adr = card.add('adr')
+            adr.type_param = 'HOME'
+            adr.value = vobject.vcard.Address(street=user.direccion) 
+            
+        if user.empresa:
+            card.add('org').value = user.empresa
+
+        # Otros campos que puedan tener sentido en un vCard (ej. TÍTULO, NOTAS, etc.)
+        if user.actividad:
+            card.add('title').value = user.actividad
+        if user.cedula:
+            card.add('note').value = f"Cédula: {user.cedula}"
+        
+        if user.avatar_url and 'default_avatar.png' not in user.avatar_url:
+            with current_app.app_context():
+                full_avatar_url = url_for('static', filename=user.avatar_url, _external=True)
+                photo = card.add('photo')
+                photo.value = full_avatar_url
+                photo.type_param = 'URI'
+
+        if user.fecha_actualizacion:
+            card.add('rev').value = user.fecha_actualizacion.isoformat()
+        
+        # Serializa cada vCard y añádelo a la lista
+        all_vcard_data.append(card.serialize())
+            
+        # Une todas las vCards en una sola cadena
+        final_vcf_content = "\n".join(all_vcard_data)
+
+        buffer = io.BytesIO(final_vcf_content.encode('utf-8'))
+
+        return send_file(
+            buffer,
+            mimetype='text/vcard',
+            as_attachment=True,
+            download_name=f'{user.username}.vcf'
+        )
+    except Exception as e:
+        flash(f'Error al exportar contactos: {e}', 'danger')
+        return redirect(url_for('contactos.ver_detalle', user_id=user_id))
 
 @contactos_bp.route('/exportar_excel/<int:user_id>')
 def exportar_excel(user_id):
@@ -467,9 +487,12 @@ def exportar_todos_vcard():
         flash('Por favor, inicia sesión para exportar todos los contactos.', 'info')
         return redirect(url_for('login'))
 
+    # Inicializar all_vcard_data antes del bloque try/except
+    all_vcard_data = [] 
+
     try:
         all_users = User.query.all()
-        all_vcard_data = []
+        
 
         for user in all_users:
             card = vobject.vCard()

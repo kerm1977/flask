@@ -86,16 +86,24 @@
                         <input type="text" class="form-control" id="cedula" name="cedula" value="{{ user.cedula if user.cedula else '' }}">
                     </div>
 
-                    {# Dirección #}
+                    {# Dirección - CAMBIO A SELECT #}
                     <div class="mb-3">
-                        <label for="direccion" class="form-label">Dirección</label>
-                        <textarea class="form-control" id="direccion" name="direccion" rows="3">{{ user.direccion if user.direccion else '' }}</textarea>
+                        <label for="direccion" class="form-label">Provincia</label>
+                        <select class="form-select" id="direccion" name="direccion">
+                            <option value="">Seleccionar Provincia</option> {# Opción por defecto #}
+                            {% for provincia in provincia_opciones %}
+                                <option value="{{ provincia }}" {% if provincia == (request.form.get('direccion') or user.direccion) %}selected{% endif %}>{{ provincia }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
 
                     {# Fecha de Cumpleaños #}
                     <div class="mb-3">
                         <label for="fecha_cumpleanos" class="form-label">Fecha de Cumpleaños</label>
                         <input type="date" class="form-control" id="fecha_cumpleanos" name="fecha_cumpleanos" value="{{ user.fecha_cumpleanos.strftime('%Y-%m-%d') if user.fecha_cumpleanos else '' }}">
+                        {# Este campo utiliza el datepicker nativo del navegador para input type="date".
+                           Si el día no es seleccionable, podría ser un comportamiento específico del navegador
+                           o una interferencia de CSS/JS externo no visible aquí. #}
                     </div>
 
                     {# Tipo de Sangre #}
