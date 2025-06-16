@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Ver Proyectos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Gestor de Proyectos</h1>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        {# Botón para crear un nuevo proyecto #}
+        <a href="{{ url_for('proyecto.crear_proyecto') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Crear Nuevo Proyecto
+        </a>
+
+        {# Formulario de búsqueda #}
+        <form class="d-flex" method="GET" action="{{ url_for('proyecto.ver_proyectos') }}">
+            <input class="form-control me-2" type="search" placeholder="Buscar proyectos..." aria-label="Search" name="search_query" value="{{ search_query if search_query }}">
+            <button class="btn btn-outline-success" type="submit">Buscar</button>
+        </form>
+
+        {# Botón para exportar todos los proyectos #}
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="exportAllProjects" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-file-export"></i> Exportar Todo
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportAllProjects">
+                <li><a class="dropdown-item" href="{{ url_for('proyecto.exportar_todos_txt') }}">Exportar a TXT</a></li>
+                {# La exportación a JPG no es soportada directamente en el servidor sin librerías complejas.
+                   Se podría considerar una solución del lado del cliente o una descripción
+                   de cómo "exportar a JPG" usando la funcionalidad del navegador (captura de pantalla). #}
+            </ul>
+        </div>
+    </div>
+
+    {% if projects %}
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Nombre del Proyecto</th>
+                    <th scope="col">Propuesto por</th>
+                    <th scope="col">Invitado</th>
+                    <th scope="col">Provincia</th>
+                    <th scope="col">Fecha Actividad</th>
+                    <th scope="col">Dificultad</th>
+                    <th scope="col">Presupuesto Restante</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <th scope="row">{{ loop.index }}</th>
+                    <td>{{ project.nombre_proyecto }}</td>
+                    <td>{{ project.propuesta_por if project.propuesta_por else 'N/A' }}</td>
+                    <td>
+                        {% if project.nombre_invitado %}
+                            {{ project.nombre_invitado.nombre }} {{ project.nombre_invitado.primer_apellido }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>{{ project.provincia if project.provincia else 'N/A' }}</td>
+                    <td>{{ project.fecha_actividad_propuesta.strftime('%d/%m/%Y') if project.fecha_actividad_propuesta else 'N/A' }}</td>
+                    <td>{{ project.dificultad if project.dificultad else 'N/A' }}</td>
+                    <td>${{ project.presupuesto_restante | round(2) }}</td> {# Mostrar presupuesto restante #}
+                    <td>
+                        <a href="{{ url_for('proyecto.detalle_proyecto', project_id=project.id) }}" class="btn btn-info btn-sm me-1" title="Ver Detalles">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('proyecto.editar_proyecto', project_id=project.id) }}" class="btn btn-warning btn-sm me-1" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {# Botón de Eliminar (con modal de confirmación) #}
+                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ project.id }}" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+
+                        {# Modal de Confirmación de Eliminación #}
+                        <div class="modal fade" id="confirmDeleteModal{{ project.id }}" tabindex="-1" aria-labelledby="confirmDeleteModalLabel{{ project.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="confirmDeleteModalLabel{{ project.id }}">Confirmar Eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Estás seguro de que quieres eliminar el proyecto "<strong>{{ project.nombre_proyecto }}</strong>"? Esta acción no se puede deshacer.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <form action="{{ url_for('proyecto.eliminar_proyecto', project_id=project.id) }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No hay proyectos registrados aún. ¡Crea uno nuevo!
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -8,20 +8,25 @@ import re # Para validación de email
 # MODIFICADO: Importa db, bcrypt, migrate y User desde models.py
 # ES CRUCIAL QUE EL MODELO USER Y LAS INSTANCIAS DE DB, BCRYPT Y MIGRATE
 # SE IMPORTEN ÚNICAMENTE DESDE models.py PARA EVITAR IMPORTACIONES CIRCULARES.
-from models import db, bcrypt, migrate, User 
+from models import db, bcrypt, migrate, User, Project # NUEVA: Importa el modelo Project
 from contactos import contactos_bp 
-from perfil import perfil_bp # NUEVA: Importa el Blueprint de perfil
+from perfil import perfil_bp # Importa el Blueprint de perfil
+from proyecto import proyecto_bp # NUEVA: Importa el Blueprint de proyectos
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 # Configuración para subida de archivos
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
+PROJECT_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'project_images') # Nueva carpeta para imágenes de proyectos
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROJECT_IMAGE_UPLOAD_FOLDER'] = PROJECT_IMAGE_UPLOAD_FOLDER # Guarda la ruta en config
 
-# Asegúrate de que la carpeta de subidas exista
+# Asegúrate de que las carpetas de subidas existan
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PROJECT_IMAGE_UPLOAD_FOLDER, exist_ok=True) # Asegura que la carpeta para imágenes de proyectos exista
 
 # Inicializa db, bcrypt y migrate con la instancia de la aplicación
 # Ahora db, bcrypt, migrate son objetos importados de models.py
@@ -221,11 +226,13 @@ def logout():
     flash('Has cerrado sesión.', 'success')
     return redirect(url_for('login'))
 
-# Registra el Blueprint después de que la app haya sido inicializada
+# Registra los Blueprints después de que la app haya sido inicializada
 app.register_blueprint(contactos_bp)
 app.register_blueprint(perfil_bp, url_prefix='/perfil')
+app.register_blueprint(proyecto_bp) # NUEVA: Registro del Blueprint de Proyectos
 
 if __name__ == '__main__':
     with app.app_context(): # Usar app_context para db.create_all()
         db.create_all()
     app.run(debug=True, port=3030)
+

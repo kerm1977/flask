@@ -9,7 +9,7 @@ db = SQLAlchemy()
 bcrypt = Bcrypt()
 migrate = Migrate() # Instanciamos Migrate aquí también
 
-# Definición del modelo de usuario
+# Definición del modelo de usuario (existente)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
@@ -45,3 +45,53 @@ class User(db.Model):
     
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.nombre}')"
+
+# NUEVO MODELO: Project
+class Project(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre_proyecto = db.Column(db.String(255), nullable=False)
+    imagen_proyecto_url = db.Column(db.String(255), nullable=True) # Para guardar la URL de la imagen
+
+    # Relacionado con la propuesta
+    propuesta_por = db.Column(db.String(100), nullable=True) # Jenny Ceciliano Cordoba, Kenneth Ruiz Matamoros, Otro
+    
+    # Campo para el invitado (relación con User)
+    nombre_invitado_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    nombre_invitado = db.relationship('User', foreign_keys=[nombre_invitado_id]) # Relación con el modelo User
+
+    provincia = db.Column(db.String(50), nullable=True)
+    fecha_actividad_propuesta = db.Column(db.Date, nullable=True)
+    dificultad = db.Column(db.String(50), nullable=True) # No Aplica, Iniciante, Básico, Intermedio, Avanzado, Técnico
+
+    transporte_terrestre = db.Column(db.String(50), nullable=True) # Autobús, Buseta, Auto, Moto, 4x4
+    transporte_acuatico = db.Column(db.String(2), nullable=True) # Si/No aplica
+    transporte_aereo = db.Column(db.String(2), nullable=True) # Si/No aplica
+    precio_entrada_aplica = db.Column(db.String(2), nullable=True) # Si/No aplica
+
+    nombre_lugar = db.Column(db.String(255), nullable=True)
+    contacto_lugar = db.Column(db.String(255), nullable=True)
+    telefono_lugar = db.Column(db.String(20), nullable=True)
+    tipo_terreno = db.Column(db.String(50), nullable=True) # No aplica, Asfalto, Acuatico, Lastre, Arena, Montañoso
+    mas_tipo_terreno = db.Column(db.Text, nullable=True) # Campo adicional para especificar más tipos de terreno
+
+    presupuesto_total = db.Column(db.Float, nullable=True)
+    costo_entrada = db.Column(db.Float, nullable=True)
+    costo_guia = db.Column(db.Float, nullable=True)
+    costo_transporte = db.Column(db.Float, nullable=True)
+
+    # El resultado de Presupuesto total - Costo de Entrada - Costo de Gúia - Costo de tranporte
+    # Este campo puede ser calculado en la aplicación antes de guardar o al mostrar.
+    # Por simplicidad, no lo guardaremos como una columna calculada directamente aquí,
+    # sino que lo calcularemos en el código Python.
+
+    nombres_acompanantes = db.Column(db.Text, nullable=True) # Para múltiples nombres, separados por comas o similar
+    recomendaciones = db.Column(db.Text, nullable=True)
+    notas_adicionales = db.Column(db.Text, nullable=True)
+    
+    # Autofecha de creado de nota (fecha de creación del proyecto)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    fecha_ultima_actualizacion = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True)
+
+    def __repr__(self):
+        return f"Project('{self.nombre_proyecto}', '{self.propuesta_por}', '{self.fecha_actividad_propuesta}')"
+

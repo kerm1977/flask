@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle del Proyecto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Detalle del Proyecto: {{ project.nombre_proyecto }}</h1>
+        <div>
+            <a href="{{ url_for('proyecto.ver_proyectos') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Volver a Proyectos
+            </a>
+            <a href="{{ url_for('proyecto.editar_proyecto', project_id=project.id) }}" class="btn btn-warning me-2">
+                <i class="fas fa-edit"></i> Editar Proyecto
+            </a>
+            <div class="dropdown d-inline-block me-2">
+                <button class="btn btn-info dropdown-toggle" type="button" id="exportProject" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportProject">
+                    <li><a class="dropdown-item" href="{{ url_for('proyecto.exportar_txt', project_id=project.id) }}">Exportar a TXT</a></li>
+                    {# Aquí se podría añadir una opción para "exportar a JPG" si se implementara una solución del lado del cliente #}
+                </ul>
+            </div>
+            {# Botón de Eliminar con Modal de Confirmación #}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash-alt"></i> Borrar Proyecto
+            </button>
+        </div>
+    </div>
+
+    {# Modal de Confirmación de Eliminación (igual que en contactos.py) #}
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que quieres eliminar el proyecto "<strong>{{ project.nombre_proyecto }}</strong>"? Esta acción no se puede deshacer.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form action="{{ url_for('proyecto.eliminar_proyecto', project_id=project.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Información General</h5>
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    {% if imagen_proyecto_url %}
+                        <img src="{{ imagen_proyecto_url }}" alt="Imagen del Proyecto" class="img-fluid rounded mb-3" style="max-width: 100%; height: auto; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/defaults/default_project.png') }}" alt="Sin imagen de proyecto" class="img-fluid rounded mb-3" style="max-width: 100%; height: auto; object-fit: cover;">
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <p><strong>Nombre:</strong> {{ project.nombre_proyecto }}</p>
+                    <p><strong>Propuesto por:</strong> {{ project.propuesta_por if project.propuesta_por else 'N/A' }}</p>
+                    <p><strong>Invitado:</strong> 
+                        {% if project.nombre_invitado %}
+                            {{ project.nombre_invitado.nombre }} {{ project.nombre_invitado.primer_apellido }} {{ project.nombre_invitado.segundo_apellido if project.nombre_invitado.segundo_apellido else '' }}
+                            (<a href="{{ url_for('contactos.ver_detalle', user_id=project.nombre_invitado.id) }}">Ver Contacto</a>)
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                    <p><strong>Provincia:</strong> {{ project.provincia if project.provincia else 'N/A' }}</p>
+                    <p><strong>Fecha Actividad Propuesta:</strong> {{ project.fecha_actividad_propuesta.strftime('%d/%m/%Y') if project.fecha_actividad_propuesta else 'N/A' }}</p>
+                    <p><strong>Dificultad:</strong> {{ project.dificultad if project.dificultad else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Detalles de Transporte y Costos</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Transporte Terrestre:</strong> {{ project.transporte_terrestre if project.transporte_terrestre else 'N/A' }}</p>
+                    <p><strong>Transporte Acuático:</strong> {{ project.transporte_acuatico if project.transporte_acuatico else 'No Aplica' }}</p>
+                    <p><strong>Transporte Aéreo:</strong> {{ project.transporte_aereo if project.transporte_aereo else 'No Aplica' }}</p>
+                    <p><strong>Precio Entrada Aplica:</strong> {{ project.precio_entrada_aplica if project.precio_entrada_aplica else 'No Aplica' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Presupuesto Total:</strong> ${{ project.presupuesto_total | default(0.00, true) | round(2) }}</p>
+                    <p><strong>Costo de Entrada:</strong> ${{ project.costo_entrada | default(0.00, true) | round(2) }}</p>
+                    <p><strong>Costo de Guía:</strong> ${{ project.costo_guia | default(0.00, true) | round(2) }}</p>
+                    <p><strong>Costo de Transporte:</strong> ${{ project.costo_transporte | default(0.00, true) | round(2) }}</p>
+                    <h5 class="mt-3"><strong>Presupuesto Restante:</strong> <span class="text-success">${{ project.presupuesto_restante | round(2) }}</span></h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Información del Lugar y Terreno</h5>
+            <p><strong>Nombre del Lugar:</strong> {{ project.nombre_lugar if project.nombre_lugar else 'N/A' }}</p>
+            <p><strong>Contacto del Lugar:</strong> {{ project.contacto_lugar if project.contacto_lugar else 'N/A' }}</p>
+            <p><strong>Teléfono del Lugar:</strong> {{ project.telefono_lugar if project.telefono_lugar else 'N/A' }}</p>
+            <p><strong>Tipo de Terreno:</strong> {{ project.tipo_terreno if project.tipo_terreno else 'N/A' }}</p>
+            <p><strong>Más Detalles del Tipo de Terreno:</strong> {{ project.mas_tipo_terreno if project.mas_tipo_terreno else 'N/A' }}</p>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Detalles Adicionales</h5>
+            <p><strong>Nombres de Acompañantes:</strong> {{ project.nombres_acompanantes if project.nombres_acompanantes else 'N/A' }}</p>
+            <p><strong>Recomendaciones:</strong> {{ project.recomendaciones if project.recomendaciones else 'N/A' }}</p>
+            <p><strong>Notas Adicionales:</strong> {{ project.notas_adicionales if project.notas_adicionales else 'N/A' }}</p>
+            <p><strong>Fecha de Creación:</strong> {{ project.fecha_creacion.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+            <p><strong>Última Actualización:</strong> {{ project.fecha_ultima_actualizacion.strftime('%d/%m/%Y %H:%M:%S') if project.fecha_ultima_actualizacion else 'N/A' }}</p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

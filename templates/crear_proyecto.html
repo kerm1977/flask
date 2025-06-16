@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Proyecto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Crear Nuevo Proyecto</h1>
+    <form method="POST" action="{{ url_for('proyecto.crear_proyecto') }}" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-6">
+                {# Nombre del Proyecto #}
+                <div class="mb-3">
+                    <label for="nombre_proyecto" class="form-label">Nombre del Proyecto <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nombre_proyecto" name="nombre_proyecto" required>
+                </div>
+
+                {# Imagen del Proyecto #}
+                <div class="mb-3">
+                    <label for="imagen_proyecto" class="form-label">Imagen del Proyecto</label>
+                    <input type="file" class="form-control" id="imagen_proyecto" name="imagen_proyecto" accept="image/*">
+                    <div class="form-text">Formatos permitidos: PNG, JPG, JPEG, GIF.</div>
+                </div>
+
+                {# Propuesta por #}
+                <div class="mb-3">
+                    <label for="propuesta_por" class="form-label">Propuesta por</label>
+                    <select class="form-select" id="propuesta_por" name="propuesta_por">
+                        {% for opcion in propuesta_por_opciones %}
+                            <option value="{{ opcion }}" {% if loop.first %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" class="form-control mt-2" id="otro_propuesta_por_texto" name="otro_propuesta_por_texto" placeholder="Especifique otro..." style="display: none;">
+                </div>
+                <script>
+                    document.getElementById('propuesta_por').addEventListener('change', function() {
+                        var otroInput = document.getElementById('otro_propuesta_por_texto');
+                        if (this.value === 'Otro') {
+                            otroInput.style.display = 'block';
+                            otroInput.setAttribute('required', 'required'); // Hacerlo requerido si se selecciona 'Otro'
+                        } else {
+                            otroInput.style.display = 'none';
+                            otroInput.removeAttribute('required');
+                            otroInput.value = ''; // Limpiar el valor si no es 'Otro'
+                        }
+                    });
+                </script>
+
+                {# Nombre Invitado #}
+                <div class="mb-3">
+                    <label for="nombre_invitado" class="form-label">Invitado (Contacto Existente)</label>
+                    <select class="form-select" id="nombre_invitado" name="nombre_invitado">
+                        <option value="">Seleccionar Contacto (Opcional)</option>
+                        {% for contacto in contactos_opciones %}
+                            <option value="{{ contacto.id }}">
+                                {{ contacto.nombre }} {{ contacto.primer_apellido }} {{ contacto.segundo_apellido if contacto.segundo_apellido else '' }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Provincia #}
+                <div class="mb-3">
+                    <label for="provincia" class="form-label">Provincia</label>
+                    <select class="form-select" id="provincia" name="provincia">
+                        {% for opcion in provincia_opciones %}
+                            <option value="{{ opcion }}" {% if opcion == 'No Aplica' %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Fecha Actividad Propuesta #}
+                <div class="mb-3">
+                    <label for="fecha_actividad_propuesta" class="form-label">Fecha de Actividad Propuesta</label>
+                    <input type="date" class="form-control" id="fecha_actividad_propuesta" name="fecha_actividad_propuesta">
+                </div>
+
+                {# Dificultad #}
+                <div class="mb-3">
+                    <label for="dificultad" class="form-label">Dificultad</label>
+                    <select class="form-select" id="dificultad" name="dificultad">
+                        {% for opcion in dificultad_opciones %}
+                            <option value="{{ opcion }}" {% if opcion == 'No Aplica' %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Transporte Terrestre #}
+                <div class="mb-3">
+                    <label for="transporte_terrestre" class="form-label">Transporte Terrestre</label>
+                    <select class="form-select" id="transporte_terrestre" name="transporte_terrestre">
+                        {% for opcion in transporte_terrestre_opciones %}
+                            <option value="{{ opcion }}" {% if opcion == 'No Aplica' %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Transporte Acuático #}
+                <div class="mb-3">
+                    <label for="transporte_acuatico" class="form-label">Transporte Acuático</label>
+                    <select class="form-select" id="transporte_acuatico" name="transporte_acuatico">
+                        {% for opcion in si_no_aplica_opciones %}
+                            <option value="{{ opcion }}" {% if opcion == 'No Aplica' %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Transporte Aéreo #}
+                <div class="mb-3">
+                    <label for="transporte_aereo" class="form-label">Transporte Aéreo</label>
+                    <select class="form-select" id="transporte_aereo" name="transporte_aereo">
+                        {% for opcion in si_no_aplica_opciones %}
+                            <option value="{{ opcion }}" {% if opcion == 'No Aplica' %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                {# Precio Entrada #}
+                <div class="mb-3">
+                    <label for="precio_entrada_aplica" class="form-label">¿Aplica Precio de Entrada?</label>
+                    <select class="form-select" id="precio_entrada_aplica" name="precio_entrada_aplica">
+                        {% for opcion in si_no_aplica_opciones %}
+                            <option value="{{ opcion }}" {% if opcion == 'No Aplica' %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Nombre Lugar #}
+                <div class="mb-3">
+                    <label for="nombre_lugar" class="form-label">Nombre del Lugar</label>
+                    <input type="text" class="form-control" id="nombre_lugar" name="nombre_lugar">
+                </div>
+
+                {# Contacto Lugar #}
+                <div class="mb-3">
+                    <label for="contacto_lugar" class="form-label">Contacto del Lugar</label>
+                    <input type="text" class="form-control" id="contacto_lugar" name="contacto_lugar">
+                </div>
+
+                {# Teléfono Lugar #}
+                <div class="mb-3">
+                    <label for="telefono_lugar" class="form-label">Teléfono del Lugar</label>
+                    <input type="tel" class="form-control" id="telefono_lugar" name="telefono_lugar">
+                </div>
+
+                {# Tipo de Terreno #}
+                <div class="mb-3">
+                    <label for="tipo_terreno" class="form-label">Tipo de Terreno</label>
+                    <select class="form-select" id="tipo_terreno" name="tipo_terreno">
+                        {% for opcion in tipo_terreno_opciones %}
+                            <option value="{{ opcion }}" {% if opcion == 'No Aplica' %}selected{% endif %}>{{ opcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Más Tipo de Terreno #}
+                <div class="mb-3">
+                    <label for="mas_tipo_terreno" class="form-label">Más Detalles del Tipo de Terreno</label>
+                    <textarea class="form-control" id="mas_tipo_terreno" name="mas_tipo_terreno" rows="2"></textarea>
+                </div>
+
+                {# Presupuesto Total #}
+                <div class="mb-3">
+                    <label for="presupuesto_total" class="form-label">Presupuesto Total ($)</label>
+                    <input type="number" step="0.01" class="form-control" id="presupuesto_total" name="presupuesto_total" value="0.00">
+                </div>
+
+                {# Costo de Entrada #}
+                <div class="mb-3">
+                    <label for="costo_entrada" class="form-label">Costo de Entrada ($)</label>
+                    <input type="number" step="0.01" class="form-control" id="costo_entrada" name="costo_entrada" value="0.00">
+                </div>
+
+                {# Costo de Guía #}
+                <div class="mb-3">
+                    <label for="costo_guia" class="form-label">Costo de Guía ($)</label>
+                    <input type="number" step="0.01" class="form-control" id="costo_guia" name="costo_guia" value="0.00">
+                </div>
+
+                {# Costo de Transporte #}
+                <div class="mb-3">
+                    <label for="costo_transporte" class="form-label">Costo de Transporte ($)</label>
+                    <input type="number" step="0.01" class="form-control" id="costo_transporte" name="costo_transporte" value="0.00">
+                </div>
+
+                {# Nombres de Acompañantes #}
+                <div class="mb-3">
+                    <label for="nombres_acompanantes" class="form-label">Nombres de Acompañantes</label>
+                    <textarea class="form-control" id="nombres_acompanantes" name="nombres_acompanantes" rows="3" placeholder="Separe los nombres con comas o saltos de línea"></textarea>
+                </div>
+
+                {# Recomendaciones #}
+                <div class="mb-3">
+                    <label for="recomendaciones" class="form-label">Recomendaciones</label>
+                    <textarea class="form-control" id="recomendaciones" name="recomendaciones" rows="3"></textarea>
+                </div>
+
+                {# Notas Adicionales #}
+                <div class="mb-3">
+                    <label for="notas_adicionales" class="form-label">Notas Adicionales</label>
+                    <textarea class="form-control" id="notas_adicionales" name="notas_adicionales" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3"><i class="fas fa-save"></i> Guardar Proyecto</button>
+        <a href="{{ url_for('proyecto.ver_proyectos') }}" class="btn btn-secondary mt-3"><i class="fas fa-ban"></i> Cancelar</a>
+    </form>
+</div>
+{% endblock %}
