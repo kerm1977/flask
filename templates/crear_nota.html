@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Nueva Nota{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Crear Nueva Nota</h1>
+    <form method="POST" action="{{ url_for('notas.crear_nota') }}" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-12">
+                {# Título de la Nota #}
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título de la Nota <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+
+                {# Imagen de la Nota #}
+                <div class="mb-3">
+                    <label for="image" class="form-label">Imagen de la Nota (Opcional)</label>
+                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                    <div class="form-text">Formatos permitidos: PNG, JPG, JPEG, GIF.</div>
+                </div>
+
+                {# Text Area para Contenido Enriquecido (CKEditor) #}
+                <div class="mb-3">
+                    <label for="content" class="form-label">Contenido de la Nota</label>
+                    <textarea class="form-control" id="content" name="content" rows="10"></textarea>
+                </div>
+
+                {# NUEVO: Switch para visibilidad pública #}
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="is_public" name="is_public">
+                    <label class="form-check-label" for="is_public">Hacer esta nota pública (visible para todos los usuarios logueados)</label>
+                </div>
+
+                {# Multiselector de Contactos que pueden ver la nota #}
+                <div class="mb-3">
+                    <label for="authorized_viewers" class="form-label">Usuarios que pueden ver esta nota (Multi-selección)</label>
+                    <select class="form-select" id="authorized_viewers" name="authorized_viewers" multiple size="7">
+                        {% for user in all_users %}
+                            {# No permitimos que el creador se deseleccione a sí mismo #}
+                            {% if user.id == session.user_id %}
+                                <option value="{{ user.id }}" selected disabled>{{ user.nombre }} {{ user.primer_apellido }} (Creador)</option>
+                            {% else %}
+                                <option value="{{ user.id }}">
+                                    {{ user.nombre }} {{ user.primer_apellido }} {{ user.segundo_apellido if user.segundo_apellido else '' }} ({{ user.username }})
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Mantén 'Ctrl' (Windows) / 'Cmd' (Mac) para seleccionar múltiples usuarios. El creador siempre tendrá acceso.</div>
+                </div>
+
+                {# Autofechas y Creador (manejados por el backend, no necesitan input aquí) #}
+                <p class="text-muted mt-3">
+                    La fecha de creación y el contacto creador se asignarán automáticamente.
+                </p>
+
+                <button type="submit" class="btn btn-success mt-3"><i class="fas fa-save"></i> Guardar Nota</button>
+                <a href="{{ url_for('notas.ver_notas') }}" class="btn btn-secondary mt-3"><i class="fas fa-ban"></i> Cancelar</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# Script para CKEditor #}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+    ClassicEditor
+        .create( document.querySelector( '#content' ), {
+            // Configuración opcional de CKEditor
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'alignment', '|',
+                    'link', 'undo', 'redo'
+                ]
+            },
+            language: 'es', // Configura el idioma a español
+            // Agrega más configuraciones o plugins si es necesario
+        } )
+        .then( editor => {
+            console.log( editor );
+            // Lógica para el multiselector (la misma que antes)
+            const creatorId = {{ session.user_id }};
+            const selectElement = document.getElementById('authorized_viewers');
+            for (let i = 0; i < selectElement.options.length; i++) {
+                if (parseInt(selectElement.options[i].value) === creatorId) {
+                    selectElement.options[i].selected = true;
+                    // CKEditor no afecta directamente este select, así que la lógica de deshabilitar ya funciona
+                    break;
+                }
+            }
+        } )
+        .catch( error => {
+            console.error( error );
+        } );
+</script>
+{% endblock %}

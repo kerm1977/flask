@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Ver Notas{% endblock %} {# CORRECCIÓN: Era {% end endblock %} #}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Mis Notas</h1>
+        <a href="{{ url_for('notas.crear_nota') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Crear Nueva Nota
+        </a>
+    </div>
+
+    {% if notes %}
+        <div class="row">
+            {% for note in notes %}
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ note.title }}</h5>
+                        <p class="card-text text-muted mb-1">
+                            <small>
+                                Creado por: {{ note.creator.nombre }} {{ note.creator.primer_apellido }}
+                            </small>
+                        </p>
+                        <p class="card-text text-muted">
+                            <small>
+                                Fecha de Creación: {{ note.created_at.strftime('%d/%m/%Y %H:%M:%S') }}
+                            </small>
+                        </p>
+                        <div class="mt-auto"> {# Empuja el botón hacia abajo #}
+                            <a href="{{ url_for('notas.detalle_nota', note_id=note.id) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i> Ver Detalles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No hay notas disponibles para mostrar. ¡Crea una nueva!
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

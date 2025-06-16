@@ -9,6 +9,14 @@ db = SQLAlchemy()
 bcrypt = Bcrypt()
 migrate = Migrate() # Instanciamos Migrate aquí también
 
+# Tabla de asociación para la relación muchos-a-muchos entre Note y User
+# para los usuarios autorizados a ver una nota.
+note_viewers = db.Table('note_viewers',
+    db.Column('note_id', db.Integer, db.ForeignKey('note.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
+)
+
+
 # Definición del modelo de usuario (existente)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -46,7 +54,7 @@ class User(db.Model):
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.nombre}')"
 
-# NUEVO MODELO: Project
+# MODELO Project (existente)
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre_proyecto = db.Column(db.String(255), nullable=False)
@@ -79,11 +87,6 @@ class Project(db.Model):
     costo_guia = db.Column(db.Float, nullable=True)
     costo_transporte = db.Column(db.Float, nullable=True)
 
-    # El resultado de Presupuesto total - Costo de Entrada - Costo de Gúia - Costo de tranporte
-    # Este campo puede ser calculado en la aplicación antes de guardar o al mostrar.
-    # Por simplicidad, no lo guardaremos como una columna calculada directamente aquí,
-    # sino que lo calcularemos en el código Python.
-
     nombres_acompanantes = db.Column(db.Text, nullable=True) # Para múltiples nombres, separados por comas o similar
     recomendaciones = db.Column(db.Text, nullable=True)
     notas_adicionales = db.Column(db.Text, nullable=True)
@@ -94,4 +97,31 @@ class Project(db.Model):
 
     def __repr__(self):
         return f"Project('{self.nombre_proyecto}', '{self.propuesta_por}', '{self.fecha_actividad_propuesta}')"
+
+# MODELO Note (existente, con nueva columna)
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(255), nullable=True) # URL de la imagen de la nota
+    content = db.Column(db.Text, nullable=True) # Contenido de la nota con formato HTML
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True)
+
+    # NUEVO CAMPO: Indica si la nota es pública (visible para todos los usuarios logueados)
+    is_public = db.Column(db.Boolean, default=False, nullable=False)
+
+    # Relación con el usuario que crea la nota
+    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    creator = db.relationship('User', backref='created_notes', foreign_keys=[creator_id])
+
+    # Relación muchos-a-muchos con usuarios que pueden ver la nota
+    # secondary apunta a la tabla de asociación definida arriba
+    authorized_viewers = db.relationship(
+        'User', secondary=note_viewers, lazy='subquery',
+        backref=db.backref('viewable_notes', lazy=True)
+    )
+
+    def __repr__(self):
+        return f"Note('{self.title}', Creator ID: {self.creator_id}, Public: {self.is_public})"
 

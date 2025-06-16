@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Nota{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Editar Nota: {{ note.title }}</h1>
+    <form method="POST" action="{{ url_for('notas.editar_nota', note_id=note.id) }}" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-12">
+                {# Título de la Nota #}
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título de la Nota <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ note.title }}" required>
+                </div>
+
+                {# Imagen de la Nota #}
+                <div class="mb-3">
+                    <label for="image" class="form-label">Imagen de la Nota (Opcional)</label>
+                    {% if image_url %}
+                        <div class="mb-2">
+                            <img src="{{ image_url }}" alt="Imagen actual de la nota" class="img-thumbnail" style="max-width: 200px; height: auto;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="clear_image" name="clear_image" value="1">
+                                <label class="form-check-label" for="clear_image">
+                                    Eliminar imagen actual
+                                </label>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                    <div class="form-text">Formatos permitidos: PNG, JPG, JPEG, GIF. Dejar en blanco para mantener la imagen actual o eliminarla si está marcada la casilla.</div>
+                </div>
+
+                {# Text Area para Contenido Enriquecido (CKEditor) #}
+                <div class="mb-3">
+                    <label for="content" class="form-label">Contenido de la Nota</label>
+                    <textarea class="form-control" id="content" name="content" rows="10">{{ note.content | safe }}</textarea>
+                </div>
+
+                {# NUEVO: Switch para visibilidad pública #}
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="is_public" name="is_public" {% if note.is_public %}checked{% endif %}>
+                    <label class="form-check-label" for="is_public">Hacer esta nota pública (visible para todos los usuarios logueados)</label>
+                </div>
+
+                {# Multiselector de Contactos que pueden ver la nota #}
+                <div class="mb-3">
+                    <label for="authorized_viewers" class="form-label">Usuarios que pueden ver esta nota (Multi-selección)</label>
+                    <select class="form-select" id="authorized_viewers" name="authorized_viewers" multiple size="7">
+                        {% for user in all_users %}
+                            {% set is_creator = (user.id == session.user_id) %}
+                            {% set is_selected = (user.id in current_authorized_viewer_ids) %}
+                            
+                            <option value="{{ user.id }}" 
+                                {% if is_creator %}selected disabled{% endif %} {# Creador siempre seleccionado y deshabilitado #}
+                                {% if is_selected and not is_creator %}selected{% endif %} {# Selecciona otros si ya estaban autorizados #}
+                            >
+                                {{ user.nombre }} {{ user.primer_apellido }} {{ user.segundo_apellido if user.segundo_apellido else '' }} 
+                                {% if is_creator %}(Creador){% else %}({{ user.username }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Mantén 'Ctrl' (Windows) / 'Cmd' (Mac) para seleccionar múltiples usuarios. El creador siempre tendrá acceso.</div>
+                </div>
+
+                {# Autofechas y Creador (mostrados como texto, no editables aquí) #}
+                <p class="text-muted mt-3">
+                    Creado por: <strong>{{ note.creator.nombre }} {{ note.creator.primer_apellido }}</strong> el {{ note.created_at.strftime('%d/%m/%Y %H:%M:%S') }}.
+                    {% if note.updated_at %}
+                        Última edición: el {{ note.updated_at.strftime('%d/%m/%Y %H:%M:%S') }}.
+                    {% endif %}
+                </p>
+
+                <button type="submit" class="btn btn-success mt-3"><i class="fas fa-save"></i> Actualizar Nota</button>
+                <a href="{{ url_for('notas.detalle_nota', note_id=note.id) }}" class="btn btn-secondary mt-3"><i class="fas fa-ban"></i> Cancelar</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# Script para CKEditor #}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+    ClassicEditor
+        .create( document.querySelector( '#content' ), {
+            // Configuración opcional de CKEditor
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'alignment', '|',
+                    'link', 'undo', 'redo'
+                ]
+            },
+            language: 'es', // Configura el idioma a español
+            // Agrega más configuraciones o plugins si es necesario
+        } )
+        .then( editor => {
+            console.log( editor );
+            // Lógica para el multiselector (la misma que antes)
+            const creatorId = {{ session.user_id }};
+            const selectElement = document.getElementById('authorized_viewers');
+            for (let i = 0; i < selectElement.options.length; i++) {
+                if (parseInt(selectElement.options[i].value) === creatorId) {
+                    selectElement.options[i].selected = true;
+                    // Asegúrate de que el creador permanezca deshabilitado en la UI
+                    selectElement.options[i].disabled = true;
+                    break;
+                }
+            }
+
+            // CKEditor no envía automáticamente el valor de un textarea deshabilitado,
+            // pero el backend de Flask en `notas.py` ya se encarga de re-agregar al creador
+            // a la lista de `authorized_viewers` si no está presente en los datos enviados.
+            // Por lo tanto, no se requiere un input oculto adicional aquí para este caso.
+        } )
+        .catch( error => {
+            console.error( error );
+        } );
+</script>
+{% endblock %}

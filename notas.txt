@@ -1,0 +1,34 @@
+notas.txt
+
+Ahora necesito crear un área de notas que permita 
+
+
+Para esto vamos ha crear:
+notas.py
+
+y las vistas
+crear_nota.html
+	Formulario con los siguientes campos. 
+	guardar una imagen,
+	colocar un titulo,
+	Text area para colocarle negrita, subrayado, underline, tachado, viñeta, numeros tipo lista, h1 hasta h6, Sistema de alineado centrado, justificado, derecha, Izquierda
+	La autofecha de creada la nota
+	y el contacto que lo crea Usuario actual
+	y agregar un multiselectór de contactos que pueden ver la nota
+
+ver_notas.html
+	permite ver el título de la nota, 
+	la autofecha de creado
+	el contacto que lo crea 
+	un botón más que redirige a detalle_notas.html
+
+editar_notas.html
+	Permite editar todos los campos y crea una fecha automática en que se editó
+	inclusive modificar el multiselectór de usuarios que pueden ver la nota
+
+
+detalle_notas.html
+	permite ver la nota con todos los campos completos imagen y demás campos
+	va a utilizar el mismo botón de borrado de bootstrap flask y flask
+	exportar a txt y jpg visto como card
+	si el contacto puede ver la nota indicar con un texto en verde, usted si está autorizado a ver esta nota. No todos la pueden ver
