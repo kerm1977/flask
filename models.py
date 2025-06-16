@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
-from datetime import datetime
+from datetime import datetime, date # Importar date para manejar fechas
 
 # Instanciamos SQLAlchemy y Bcrypt aquí, pero no los asociamos aún a la app
 # Esto se hará en app.py con db.init_app(app)

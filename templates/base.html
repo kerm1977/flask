@@ -21,9 +21,13 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('home') }}">Hola, {{ session.username }}</a>
                     </li>
-                    {# NUEVO ENLACE PARA VER CONTACTOS #}
+                    {# ENLACE PARA VER CONTACTOS #}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('contactos.ver_contactos') }}">Ver Contactos</a>
+                    </li>
+                    {# CORRECCIÓN: ENLACE PARA PERFIL AHORA APUNTA A ver_perfil #}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('perfil.ver_perfil') }}">Perfil</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('logout') }}">Cerrar Sesión</a>

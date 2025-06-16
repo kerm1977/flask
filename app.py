@@ -1,13 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, current_app 
 from config import Config
 import os
 from werkzeug.utils import secure_filename # Para nombres de archivo seguros
 from datetime import datetime, date # Importar date para manejar fechas
 import re # Para validación de email
 
-# Importa db, bcrypt, migrate y User desde el nuevo archivo models.py
+# MODIFICADO: Importa db, bcrypt, migrate y User desde models.py
+# ES CRUCIAL QUE EL MODELO USER Y LAS INSTANCIAS DE DB, BCRYPT Y MIGRATE
+# SE IMPORTEN ÚNICAMENTE DESDE models.py PARA EVITAR IMPORTACIONES CIRCULARES.
 from models import db, bcrypt, migrate, User 
-from contactos import contactos_bp # Esta línea sigue igual
+from contactos import contactos_bp 
+from perfil import perfil_bp # NUEVA: Importa el Blueprint de perfil
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -21,14 +24,21 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Inicializa db, bcrypt y migrate con la instancia de la aplicación
+# Ahora db, bcrypt, migrate son objetos importados de models.py
 db.init_app(app)
 bcrypt.init_app(app)
-migrate.init_app(app, db) # Esto conecta tu app Flask y tu instancia de SQLAlchemy con Migrate
+migrate.init_app(app, db)
 
 # Función para verificar extensiones de archivo permitidas
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Adjuntando allowed_file y UPLOAD_FOLDER al objeto 'app'
+# Esto permite que los Blueprints accedan a ellos a través de current_app
+app.allowed_file = allowed_file 
+app.UPLOAD_FOLDER = UPLOAD_FOLDER
+
 
 # Rutas de la aplicación (mantenidas igual)
 @app.route('/')
@@ -43,6 +53,8 @@ def register():
     
     # Opciones para Tipo de Sangre
     tipo_sangre_opciones = ["Seleccionar Tipo", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+    # NUEVA: Opciones para Provincia
+    provincia_opciones = ["San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón"]
 
     if request.method == 'POST':
         username = request.form['username_registro']
@@ -71,7 +83,7 @@ def register():
                 fecha_cumpleanos = datetime.strptime(fecha_cumpleanos_str, '%Y-%m-%d').date()
             except ValueError:
                 flash('Formato de fecha de cumpleaños inválido.', 'danger')
-                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
         tipo_sangre = request.form.get('tipo_sangre')
         poliza = request.form.get('poliza')
@@ -81,27 +93,27 @@ def register():
 
         if not all([username, password, confirm_password, nombre, primer_apellido, telefono]):
             flash('Por favor, completa todos los campos obligatorios (*).', 'danger')
-            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
         if password != confirm_password:
             flash('Las contraseñas no coinciden.', 'danger')
-            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
         existing_username = User.query.filter_by(username=username).first()
         if existing_username:
             flash('Ese nombre de usuario ya está en uso. Por favor, elige otro.', 'danger')
-            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
         
         if email:
             # Validación de email básico
             if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
                 flash('Formato de correo electrónico inválido.', 'danger')
-                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
             existing_email = User.query.filter_by(email=email).first()
             if existing_email:
                 flash('Ese correo electrónico ya está registrado. Por favor, usa otro.', 'danger')
-                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         avatar_filename = None
@@ -115,7 +127,7 @@ def register():
                 avatar_filename = 'uploads/avatars/' + filename
             elif avatar_file.filename != '':
                 flash('Tipo de archivo de avatar no permitido. Solo se aceptan PNG, JPG, JPEG, GIF.', 'warning')
-                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+                return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
         
         if not avatar_filename:
             avatar_filename = 'images/defaults/default_avatar.png'
@@ -159,10 +171,10 @@ def register():
         except Exception as e:
             db.session.rollback()
             flash(f'Error al registrar usuario: {e}', 'danger')
-            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+            return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
     # Si es GET, renderiza el formulario
-    return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones)
+    return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -179,6 +191,7 @@ def login():
             session['logged_in'] = True
             session['username'] = user.username
             session['email'] = user.email
+            session['user_id'] = user.id # NUEVA: Almacenar user_id en la sesión
             flash('¡Sesión iniciada correctamente!', 'success')
             return redirect(url_for('home'))
         else:
@@ -189,6 +202,7 @@ def login():
 @app.route('/home')
 def home():
     if 'logged_in' in session and session['logged_in']:
+        # Asegúrate de importar User desde models.py para usarlo aquí
         user = User.query.filter_by(username=session['username']).first()
         avatar_url = None
         if user and user.avatar_url:
@@ -209,6 +223,9 @@ def logout():
 
 # Registra el Blueprint después de que la app haya sido inicializada
 app.register_blueprint(contactos_bp)
+app.register_blueprint(perfil_bp, url_prefix='/perfil')
 
 if __name__ == '__main__':
+    with app.app_context(): # Usar app_context para db.create_all()
+        db.create_all()
     app.run(debug=True, port=3030)

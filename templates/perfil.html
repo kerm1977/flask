@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<style>
+    /* Nueva clase para ocultar elementos sin eliminarlos del flujo */
+    .hidden-for-capture {
+        visibility: hidden !important;
+    }
+</style>
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9 col-lg-8">
+            <div class="card shadow-lg p-4" id="contact-details-card"> {# ID para la captura de html2canvas #}
+                <h2 class="card-title text-center mb-4 text-warning">Mi Perfil</h2>
+                
+                <div class="text-center mb-4">
+                    {% if avatar_url %}
+                        <img src="{{ avatar_url }}" alt="Avatar de {{ user.username }}" 
+                             class="img-thumbnail rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover; border-color: #ffc107 !important;"> {# Naranja de Bootstrap #}
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/defaults/default_avatar.png') }}" alt="Avatar por defecto" 
+                             class="img-thumbnail rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover; border-color: #ffc107 !important;">
+                    {% endif %}
+                    <h3 class="h4 mb-1">{{ user.nombre }} {{ user.primer_apellido }} {{ user.segundo_apellido if user.segundo_apellido else '' }}</h3>
+                    <p class="text-muted">@{{ user.username }}</p>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <h4 class="text-warning mb-3">Información de Contacto</h4>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Teléfono:</strong>
+                                <span>{{ user.telefono }}</span>
+                            </li>
+                            {% if user.email %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Email:</strong>
+                                <span>{{ user.email }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.telefono_emergencia %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Tel. Emergencia:</strong>
+                                <span>{{ user.telefono_emergencia }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.nombre_emergencia %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Contacto Emergencia:</strong>
+                                <span>{{ user.nombre_emergencia }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.direccion %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Provincia:</strong> {# Cambiado de Dirección a Provincia #}
+                                <span>{{ user.direccion }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <h4 class="text-warning mb-3">Información Adicional</h4>
+                        <ul class="list-group list-group-flush">
+                            {% if user.cedula %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Cédula:</strong>
+                                <span>{{ user.cedula }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.empresa %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Empresa:</strong>
+                                <span>{{ user.empresa }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.actividad %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Actividad:</strong>
+                                <span>{{ user.actividad }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.capacidad %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Capacidad:</strong>
+                                <span>{{ user.capacidad }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.participacion %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Participación:</strong>
+                                <span>{{ user.participacion }}</span>
+                            </li>
+                            {% endif %}
+                            {# NUEVOS CAMPOS A MOSTRAR #}
+                            {% if user.fecha_cumpleanos %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Fecha de Cumpleaños:</strong>
+                                <span>{{ user.fecha_cumpleanos.strftime('%d/%m/%Y') }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.tipo_sangre %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Tipo de Sangre:</strong>
+                                <span>{{ user.tipo_sangre }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.poliza %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Póliza:</strong>
+                                <span>{{ user.poliza }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.aseguradora %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Aseguradora:</strong>
+                                <span>{{ user.aseguradora }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.alergias %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Alergias:</strong>
+                                <span>{{ user.alergias }}</span>
+                            </li>
+                            {% endif %}
+                            {% if user.enfermedades_cronicas %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Enfermedades Crónicas:</strong>
+                                <span>{{ user.enfermedades_cronicas }}</span>
+                            </li>
+                            {% endif %}
+                            {# FIN NUEVOS CAMPOS #}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Fecha de Registro:</strong>
+                                <span>{{ user.fecha_registro.strftime('%d/%m/%Y %H:%M') }}</span>
+                            </li>
+                            {% if user.fecha_actualizacion %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Última Actualización:</strong>
+                                <span>{{ user.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                {# Contenedor de botones #}
+                <div class="d-flex flex-wrap justify-content-center gap-2 mt-4" id="export-buttons-container"> 
+                    <a href="{{ url_for('perfil.editar_perfil') }}" class="btn btn-primary btn-lg">
+                        Editar mi Información
+                    </a>
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary btn-lg">
+                        Volver a Inicio
+                    </a>
+                    {# Lógica para deshabilitar el botón de WhatsApp (si aplica, manteniendo la referencia a user.telefono) #}
+                    {% set first_digit = user.telefono[0] if user.telefono else '' %}
+                    {% set disable_whatsapp = first_digit in ['1', '2', '3', '4', '5', '9', '0'] %}
+
+                    {% if disable_whatsapp %}
+                        <button class="btn btn-success btn-lg d-flex align-items-center disabled" disabled title="Este número de teléfono no es compatible con WhatsApp.">
+                            <i class="fab fa-whatsapp me-2"></i> Enviar por WhatsApp
+                        </button>
+                    {% else %}
+                        <a href="https://wa.me/{{ user.telefono }}?text={{ (
+                            'Hola, te comparto tu información de perfil: ' 
+                            + user.nombre + ' ' + user.primer_apellido 
+                            + ((' ' + user.segundo_apellido) if user.segundo_apellido else '') 
+                            + '. Tu teléfono es ' + user.telefono + '.'
+                        )|urlencode }}" 
+                           target="_blank" class="btn btn-success btn-lg d-flex align-items-center">
+                            <i class="fab fa-whatsapp me-2"></i> Enviar por WhatsApp
+                        </a>
+                    {% endif %}
+                    
+                    {# NUEVO: Botón para exportar el perfil a JPG #}
+                    <button type="button" class="btn btn-info btn-lg" id="exportMyProfileJpgBtn">
+                        Exportar Perfil JPG
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Script para html2canvas para exportar a JPG #}
+{# Asegúrate de que html2canvas.min.js esté disponible #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportMyProfileJpgBtn = document.getElementById('exportMyProfileJpgBtn'); // Este es el ID del nuevo botón
+        const cardElement = document.getElementById('contact-details-card');
+        const buttonsContainer = document.getElementById('export-buttons-container');
+
+        if (exportMyProfileJpgBtn && cardElement && buttonsContainer) {
+            exportMyProfileJpgBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                buttonsContainer.classList.add('hidden-for-capture'); // Oculta los botones antes de la captura
+                setTimeout(() => { // Pequeño retraso para asegurar que la clase se aplique
+                    html2canvas(cardElement, {
+                        scale: 2, // Aumenta la resolución de la captura
+                        useCORS: true, // Importante si hay imágenes de diferentes orígenes
+                        logging: false // Deshabilita los logs en consola
+                    }).then(function(canvas) {
+                        // Mostrar los botones de nuevo después de la captura
+                        buttonsContainer.classList.remove('hidden-for-capture'); 
+
+                        const link = document.createElement('a');
+                        link.download = 'mi_perfil_{{ user.username }}.jpg'; // Nombre del archivo
+                        link.href = canvas.toDataURL('image/jpeg', 0.9); // Calidad 90% para JPG
+                        document.body.appendChild(link);
+                        link.click(); // Simula un clic en el enlace para descargar
+                        document.body.removeChild(link);
+                    }).catch(err => {
+                        console.error('Error al generar la imagen JPG del perfil:', err);
+                        // Asegurarse de mostrar los botones en caso de error
+                        buttonsContainer.classList.remove('hidden-for-capture'); 
+                        // Nota: usar un modal en lugar de alert() en producción
+                        alert('Hubo un error al exportar la imagen de tu perfil. Por favor, inténtalo de nuevo.');
+                    });
+                }, 50); // Pequeño retraso de 50ms (puedes ajustar si es necesario)
+            });
+        }
+    });
+</script>
+
+{% endblock %}
