@@ -32,13 +32,16 @@
                     <div class="form-text">Formatos permitidos: PNG, JPG, JPEG, GIF. Dejar en blanco para mantener la imagen actual o eliminarla si está marcada la casilla.</div>
                 </div>
 
-                {# Text Area para Contenido Enriquecido (CKEditor) #}
+                {# Contenedor para Quill.js #}
                 <div class="mb-3">
-                    <label for="content" class="form-label">Contenido de la Nota</label>
-                    <textarea class="form-control" id="content" name="content" rows="10">{{ note.content | safe }}</textarea>
+                    <label for="editor-container" class="form-label">Contenido de la Nota</label>
+                    {# El editor de Quill.js se adjuntará a este div #}
+                    <div id="editor-container" style="height: 300px; border: 1px solid #ced4da; border-radius: 0.25rem;"></div>
+                    {# Este input oculto contendrá el contenido HTML final de Quill #}
+                    <input type="hidden" name="content" id="quill-content-input" value="{{ note.content | safe }}">
                 </div>
 
-                {# NUEVO: Switch para visibilidad pública #}
+                {# Switch para visibilidad pública #}
                 <div class="mb-3 form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="is_public" name="is_public" {% if note.is_public %}checked{% endif %}>
                     <label class="form-check-label" for="is_public">Hacer esta nota pública (visible para todos los usuarios logueados)</label>
@@ -56,8 +59,7 @@
                                 {% if is_creator %}selected disabled{% endif %} {# Creador siempre seleccionado y deshabilitado #}
                                 {% if is_selected and not is_creator %}selected{% endif %} {# Selecciona otros si ya estaban autorizados #}
                             >
-                                {{ user.nombre }} {{ user.primer_apellido }} {{ user.segundo_apellido if user.segundo_apellido else '' }} 
-                                {% if is_creator %}(Creador){% else %}({{ user.username }}){% endif %}
+                                {{ user.nombre }} {{ user.nombre_completo }} ({{ user.username }})
                             </option>
                         {% endfor %}
                     </select>
@@ -79,45 +81,68 @@
     </form>
 </div>
 
-{# Script para CKEditor #}
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
-<script>
-    ClassicEditor
-        .create( document.querySelector( '#content' ), {
-            // Configuración opcional de CKEditor
-            toolbar: {
-                items: [
-                    'heading', '|',
-                    'bold', 'italic', 'underline', 'strikethrough', '|',
-                    'bulletedList', 'numberedList', '|',
-                    'alignment', '|',
-                    'link', 'undo', 'redo'
-                ]
-            },
-            language: 'es', // Configura el idioma a español
-            // Agrega más configuraciones o plugins si es necesario
-        } )
-        .then( editor => {
-            console.log( editor );
-            // Lógica para el multiselector (la misma que antes)
-            const creatorId = {{ session.user_id }};
-            const selectElement = document.getElementById('authorized_viewers');
-            for (let i = 0; i < selectElement.options.length; i++) {
-                if (parseInt(selectElement.options[i].value) === creatorId) {
-                    selectElement.options[i].selected = true;
-                    // Asegúrate de que el creador permanezca deshabilitado en la UI
-                    selectElement.options[i].disabled = true;
-                    break;
-                }
-            }
+{# Quill.js CSS #}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+{# Quill.js JS #}
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
-            // CKEditor no envía automáticamente el valor de un textarea deshabilitado,
-            // pero el backend de Flask en `notas.py` ya se encarga de re-agregar al creador
-            // a la lista de `authorized_viewers` si no está presente en los datos enviados.
-            // Por lo tanto, no se requiere un input oculto adicional aquí para este caso.
-        } )
-        .catch( error => {
-            console.error( error );
-        } );
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar Quill.js
+        const quill = new Quill('#editor-container', {
+            theme: 'snow', // Tema 'snow' para una barra de herramientas completa
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }], // h1 hasta h6
+                    ['bold', 'italic', 'underline', 'strike'], // negrita, cursiva, subrayado, tachado
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }], // números tipo lista, viñeta
+                    [{ 'align': [] }], // alineado centrado, justificado, derecha, izquierda
+                    ['link', 'image'], // enlace, imagen
+                    [{ 'script': 'sub'}, { 'script': 'super' }], // subíndice/superíndice
+                    [{ 'indent': '-1'}, { 'indent': '+1' }], // indentar/sangría
+                    [{ 'direction': 'rtl' }], // dirección de texto (derecha a izquierda)
+                    [{ 'color': [] }, { 'background': [] }], // color de texto, color de fondo
+                    ['blockquote', 'code-block'], // cita en bloque, bloque de código
+                    ['undo', 'redo'], // Deshacer y rehacer
+                    ['clean'] // Eliminar formato
+                ],
+                history: { // Para deshacer/rehacer (ya estaba configurado)
+                    delay: 2000,
+                    maxStack: 500,
+                    userOnly: true
+                }
+            },
+            placeholder: 'Escribe el contenido de tu nota aquí...',
+        });
+
+        // Cargar contenido existente en Quill
+        const existingContent = document.getElementById('quill-content-input').value;
+        if (existingContent) {
+            quill.root.innerHTML = existingContent;
+        }
+
+        // Cuando el contenido de Quill cambie, actualiza el input oculto
+        const quillContentInput = document.getElementById('quill-content-input');
+        quill.on('text-change', function() {
+            // Guarda el contenido HTML en el input oculto
+            quillContentInput.value = quill.root.innerHTML;
+        });
+
+        // Lógica para el multiselector de usuarios (misma que antes)
+        const creatorId = {{ session.user_id }};
+        const selectElement = document.getElementById('authorized_viewers');
+        for (let i = 0; i < selectElement.options.length; i++) {
+            if (parseInt(selectElement.options[i].value) === creatorId) {
+                selectElement.options[i].selected = true;
+                selectElement.options[i].disabled = true; // Asegurarse de que el creador esté deshabilitado
+                break;
+            }
+        }
+
+        // Cuando el formulario se envía, asegúrate de que el contenido final de Quill esté en el input oculto
+        document.querySelector('form').addEventListener('submit', function() {
+            quillContentInput.value = quill.root.innerHTML;
+        });
+    });
 </script>
 {% endblock %}

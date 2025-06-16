@@ -20,7 +20,8 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportNote">
                         <li><a class="dropdown-item" href="{{ url_for('notas.exportar_nota_txt', note_id=note.id) }}">Exportar a TXT</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('notas.exportar_nota_jpg', note_id=note.id) }}">Exportar a JPG (Simulado)</a></li>
+                        {# CAMBIO: Llamada a función JavaScript para exportar a JPG #}
+                        <li><a class="dropdown-item" href="#" onclick="exportNoteToJpg('{{ note.title | replace(' ', '_') | replace('/', '_') | replace('\\', '_') | replace('?', '') | replace('&', '') | replace('=', '') | replace('%', '') }}'); return false;">Exportar a JPG</a></li>
                     </ul>
                 </div>
                 {# Botón de Eliminar con Modal de Confirmación #}
@@ -65,8 +66,10 @@
         </div>
     </div>
 
-    <div class="card mb-4 shadow-sm">
+    {# Contenido completo de la nota en un solo card para exportar #}
+    <div id="note-detail-content" class="card mb-4 shadow-sm">
         <div class="card-body">
+            <h5 class="card-title">Información General</h5>
             <div class="row">
                 <div class="col-md-4 text-center">
                     {% if note.image_url %}
@@ -78,7 +81,7 @@
                 <div class="col-md-8">
                     <h5 class="card-title">{{ note.title }}</h5>
                     <p class="card-text">
-                        <strong>Creado por:</strong> 
+                        <strong>Creado por:</strong>
                         {{ note.creator.nombre }} {{ note.creator.primer_apellido }}
                         {% if note.creator.segundo_apellido %}{{ note.creator.segundo_apellido }}{% endif %}
                         ({{ note.creator.username }})
@@ -87,14 +90,17 @@
                     {% if note.updated_at %}
                         <p class="card-text"><strong>Última Actualización:</strong> {{ note.updated_at.strftime('%d/%m/%Y %H:%M:%S') }}</p>
                     {% endif %}
+                    <p class="card-text"><strong>Nota Pública:</strong> {{ 'Sí' if note.is_public else 'No' }}</p>
 
                     <h6 class="mt-3">Usuarios Autorizados:</h6>
-                    {% if note.authorized_viewers %}
+                    {% if note.is_public %}
+                        <p>Esta nota es pública y puede ser vista por todos los usuarios logueados.</p>
+                    {% elif note.authorized_viewers %}
                         <ul class="list-unstyled">
                             {% for user in note.authorized_viewers %}
                                 <li>
                                     <i class="fas fa-user-check text-success me-1"></i>
-                                    {{ user.nombre }} {{ user.primer_apellido }} 
+                                    {{ user.nombre }} {{ user.primer_apellido }}
                                     {% if user.segundo_apellido %}{{ user.segundo_apellido }}{% endif %}
                                     ({{ user.username }})
                                     {% if user.id == note.creator_id %}<span class="badge bg-primary ms-2">Creador</span>{% endif %}
@@ -106,16 +112,57 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title">Contenido de la Nota</h5>
+            <hr class="my-4"> {# Separador visual entre la info general y el contenido #}
+
+            <h5 class="card-title mt-3">Contenido de la Nota</h5>
             <div class="note-content">
                 {{ note.content | safe }} {# Renderiza el contenido HTML #}
             </div>
         </div>
     </div>
 </div>
+
+{# Script para html2canvas para exportar a JPG #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    function exportNoteToJpg(filename) {
+        const input = document.getElementById('note-detail-content'); // Obtener el elemento que queremos capturar
+        
+        // Mostrar un mensaje de carga
+        const loadingMessage = document.createElement('div');
+        loadingMessage.className = 'alert alert-info text-center mt-3';
+        loadingMessage.textContent = 'Generando imagen... Por favor, espere.';
+        document.querySelector('.container.mt-4').prepend(loadingMessage);
+
+        html2canvas(input, {
+            scale: 2, // Aumenta la escala para una mejor calidad de imagen
+            useCORS: true, // Importante si tienes imágenes de diferentes orígenes
+            logging: false // Deshabilita los logs en consola para un uso más limpio
+        }).then(function(canvas) {
+            loadingMessage.remove(); // Eliminar mensaje de carga
+
+            const link = document.createElement('a');
+            link.download = filename + '.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.9); // 0.9 es la calidad JPEG
+            link.click(); // Simula un clic para descargar la imagen
+
+            // Opcional: mostrar un mensaje de éxito
+            const successMessage = document.createElement('div');
+            successMessage.className = 'alert alert-success text-center mt-3';
+            successMessage.textContent = '¡Imagen exportada con éxito!';
+            document.querySelector('.container.mt-4').prepend(successMessage);
+            setTimeout(() => successMessage.remove(), 3000); // Quitar el mensaje después de 3 segundos
+
+        }).catch(function(error) {
+            loadingMessage.remove(); // Eliminar mensaje de carga en caso de error
+            console.error('Error al generar la imagen:', error);
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'alert alert-danger text-center mt-3';
+            errorMessage.textContent = 'Error al exportar la imagen. Por favor, inténtelo de nuevo.';
+            document.querySelector('.container.mt-4').prepend(errorMessage);
+            setTimeout(() => errorMessage.remove(), 5000); // Quitar el mensaje después de 5 segundos
+        });
+    }
+</script>
 {% endblock %}
