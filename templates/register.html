@@ -95,10 +95,15 @@
                     <input type="text" class="form-control" id="cedula" name="cedula" value="{{ request.form.get('cedula', '') }}">
                 </div>
 
-                {# Dirección (ya existía, pero lo incluyo para que esté completo) #}
+                {# Dirección - CAMBIO A SELECT #}
                 <div class="mb-3">
-                    <label for="direccion" class="form-label">Dirección (Opcional)</label>
-                    <input type="text" class="form-control" id="direccion" name="direccion" value="{{ request.form.get('direccion', '') }}">
+                    <label for="direccion" class="form-label">Provincia (Opcional)</label>
+                    <select class="form-select" id="direccion" name="direccion">
+                        <option value="">Seleccionar Provincia</option> {# Opción por defecto #}
+                        {% for provincia in provincia_opciones %}
+                            <option value="{{ provincia }}" {% if provincia == request.form.get('direccion') %}selected{% endif %}>{{ provincia }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 {# Email (Opcional) #}
