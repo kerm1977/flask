@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, session, redirect, url_for, flash, current_app, request, send_file, abort
-from models import db, Note, User # Importa db, Note y User de models.py
+from flask import Blueprint, render_template, session, redirect, url_for, flash, current_app, request, send_file, abort, jsonify # Importa jsonify
+from models import db, Note, User 
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
-import io # Para manejar archivos en memoria
+import io 
 from sqlalchemy import or_
+from bs4 import BeautifulSoup 
 
 # Carpeta donde se guardarán las imágenes de las notas (relativa a 'static')
 NOTE_IMAGE_UPLOAD_FOLDER_RELATIVE = os.path.join('uploads', 'note_images')
@@ -44,9 +45,12 @@ def crear_nota():
             # El contenido del editor de texto enriquecido se recibirá como HTML
             content = request.form.get('content') 
             
-            # NUEVO: Obtener el estado de is_public del formulario
-            is_public = 'is_public' in request.form # Si el checkbox está marcado, estará en request.form
+            # Obtener el estado de is_public del formulario
+            is_public = 'is_public' in request.form 
             
+            # NUEVO: Obtener el color de fondo del formulario
+            background_color = request.form.get('background_color', '#FFFFFF') # Valor por defecto si no se selecciona
+
             # Manejo de la imagen de la nota
             image_url = None
             if 'image' in request.files:
@@ -61,7 +65,6 @@ def crear_nota():
                     image_url = os.path.join(NOTE_IMAGE_UPLOAD_FOLDER_RELATIVE, filename).replace('\\', '/')
             
             # Obtener los IDs de los usuarios seleccionados para ver la nota
-            # request.form.getlist() se usa para select múltiple
             authorized_viewer_ids = request.form.getlist('authorized_viewers')
             authorized_viewers = []
             for user_id in authorized_viewer_ids:
@@ -80,7 +83,8 @@ def crear_nota():
                 image_url=image_url,
                 content=content,
                 creator_id=current_user_id, # Asigna el ID del usuario logueado como creador
-                is_public=is_public # NUEVO: Asigna el estado público
+                is_public=is_public, # Asigna el estado público
+                background_color=background_color # NUEVO: Asigna el color de fondo
             )
             
             # Asigna los usuarios autorizados
@@ -118,12 +122,12 @@ def ver_notas():
         # Obtener las notas que el usuario actual puede ver:
         # 1. Notas creadas por el usuario actual.
         # 2. Notas donde el usuario actual es un visor autorizado.
-        # 3. NUEVO: Notas que están marcadas como is_public=True.
+        # 3. Notas que están marcadas como is_public=True.
         all_notes = db.session.query(Note).filter(
             or_(
                 Note.creator_id == current_user_id,
                 Note.authorized_viewers.any(User.id == current_user_id),
-                Note.is_public == True # Incluir notas públicas
+                Note.is_public == True 
             )
         ).order_by(Note.created_at.desc()).all()
 
@@ -155,7 +159,7 @@ def detalle_nota(note_id):
     # O si la nota es pública
     is_authorized = (note.creator_id == current_user_id) or \
                     any(user.id == current_user_id for user in note.authorized_viewers) or \
-                    note.is_public # NUEVO: Si la nota es pública, cualquier logueado puede verla
+                    note.is_public 
     
     if not is_authorized:
         flash('No tienes permiso para ver esta nota.', 'danger')
@@ -199,9 +203,12 @@ def editar_nota(note_id):
             note.title = request.form['title']
             note.content = request.form.get('content')
             
-            # NUEVO: Actualizar el estado de is_public
+            # Actualizar el estado de is_public
             note.is_public = 'is_public' in request.form
             
+            # NUEVO: Actualizar el color de fondo
+            note.background_color = request.form.get('background_color', '#FFFFFF')
+
             # Manejo de la imagen
             if 'image' in request.files:
                 file = request.files['image']
@@ -341,6 +348,7 @@ Creado por: {note.creator.nombre} {note.creator.primer_apellido} ({note.creator.
 Fecha de Creación: {note.created_at.strftime('%d/%m/%Y %H:%M:%S')}
 Última Actualización: {note.updated_at.strftime('%d/%m/%Y %H:%M:%S') if note.updated_at else 'N/A'}
 Nota Pública: {'Sí' if note.is_public else 'No'}
+Color de Fondo: {note.background_color}
 
 Contenido:
 {plain_content}
@@ -367,9 +375,9 @@ Usuarios Autorizados para Ver:
 @notas_bp.route('/exportar_nota_jpg/<int:note_id>')
 def exportar_nota_jpg(note_id):
     """
-    Simula la exportación de la nota a JPG. 
-    Dado que la conversión de HTML a JPG en el servidor es compleja,
-    se recomienda al usuario tomar una captura de pantalla.
+    Simula la exportación de la nota a JPG (gestionada en el lado del cliente).
+    Esta ruta ahora simplemente redirige con un mensaje, ya que la lógica de exportación
+    se ha movido al frontend con html2canvas.
     """
     if 'logged_in' not in session or not session['logged_in']:
         flash('Por favor, inicia sesión para exportar notas.', 'info')
@@ -378,7 +386,7 @@ def exportar_nota_jpg(note_id):
     current_user_id = session.get('user_id')
     note = Note.query.get_or_404(note_id)
 
-    # Verificar autorización para exportar: creador, visor autorizado o nota pública
+    # Verificar autorización para exportar
     is_authorized = (note.creator_id == current_user_id) or \
                     any(user.id == current_user_id for user in note.authorized_viewers) or \
                     note.is_public
@@ -387,6 +395,39 @@ def exportar_nota_jpg(note_id):
         flash('No tienes permiso para exportar esta nota.', 'danger')
         abort(403) # Prohibido
 
-    flash("La exportación a JPG no está disponible directamente desde el servidor. Por favor, utiliza la función de captura de pantalla de tu dispositivo para obtener una imagen de la nota.", "info")
+    flash("La exportación a JPG se realiza directamente en su navegador. Se está generando la imagen...", "info")
     return redirect(url_for('notas.detalle_nota', note_id=note_id))
+
+# Nueva ruta para actualizar el color de fondo de una nota
+@notas_bp.route('/actualizar_color_nota/<int:note_id>', methods=['POST'])
+def actualizar_color_nota(note_id):
+    """
+    Actualiza el color de fondo de una nota.
+    Solo accesible para el creador de la nota.
+    """
+    from flask import jsonify # Importar jsonify aquí si no está al principio
+    if 'logged_in' not in session or not session['logged_in']:
+        return jsonify({'success': False, 'message': 'No autorizado.'}), 401
+
+    current_user_id = session.get('user_id')
+    if not current_user_id:
+        return jsonify({'success': False, 'message': 'Usuario no identificado.'}), 403
+
+    note = Note.query.get_or_404(note_id)
+
+    if note.creator_id != current_user_id:
+        return jsonify({'success': False, 'message': 'No tienes permiso para cambiar el color de esta nota.'}), 403
+
+    new_color = request.json.get('color')
+    if not new_color:
+        return jsonify({'success': False, 'message': 'Color no proporcionado.'}), 400
+
+    try:
+        note.background_color = new_color
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Color de nota actualizado exitosamente.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error actualizando el color de la nota {note_id}: {e}")
+        return jsonify({'success': False, 'message': f'Error interno al actualizar el color: {e}'}), 500
 

@@ -30,6 +30,13 @@
                     <input type="hidden" name="content" id="quill-content-input">
                 </div>
 
+                {# NUEVO: Selector de color de fondo para la nota #}
+                <div class="mb-3">
+                    <label for="background_color" class="form-label">Color de Fondo de la Nota</label>
+                    <input type="color" class="form-control form-control-color" id="background_color" name="background_color" value="#FFFFFF" title="Elige un color para el fondo de la nota">
+                    <div class="form-text">Este color se aplicará al fondo de la tarjeta de la nota en la vista de lista.</div>
+                </div>
+
                 {# Switch para visibilidad pública #}
                 <div class="mb-3 form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="is_public" name="is_public">
@@ -88,8 +95,8 @@
                     [{ 'direction': 'rtl' }], // dirección de texto (derecha a izquierda)
                     [{ 'color': [] }, { 'background': [] }], // color de texto, color de fondo
                     ['blockquote', 'code-block'], // cita en bloque, bloque de código
-                    ['undo', 'redo'], // Añadido: deshacer y rehacer
-                    ['clean'] // Añadido: Eliminar formato
+                    ['undo', 'redo'], // Deshacer y rehacer
+                    ['clean'] // Eliminar formato
                 ],
                 history: { // Para deshacer/rehacer (ya estaba configurado)
                     delay: 2000,
@@ -108,7 +115,6 @@
         });
 
         // Asegúrate de que el contenido inicial se guarde al cargar (si es necesario)
-        // Esto es más relevante para la edición, pero lo dejamos aquí por si acaso.
         quillContentInput.value = quill.root.innerHTML;
 
         // Lógica para el multiselector de usuarios (misma que antes)

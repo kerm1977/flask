@@ -41,6 +41,13 @@
                     <input type="hidden" name="content" id="quill-content-input" value="{{ note.content | safe }}">
                 </div>
 
+                {# NUEVO: Selector de color de fondo para la nota #}
+                <div class="mb-3">
+                    <label for="background_color" class="form-label">Color de Fondo de la Nota</label>
+                    <input type="color" class="form-control form-control-color" id="background_color" name="background_color" value="{{ note.background_color | default('#FFFFFF', true) }}" title="Elige un color para el fondo de la nota">
+                    <div class="form-text">Este color se aplicará al fondo de la tarjeta de la nota en la vista de lista.</div>
+                </div>
+
                 {# Switch para visibilidad pública #}
                 <div class="mb-3 form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="is_public" name="is_public" {% if note.is_public %}checked{% endif %}>
@@ -59,7 +66,8 @@
                                 {% if is_creator %}selected disabled{% endif %} {# Creador siempre seleccionado y deshabilitado #}
                                 {% if is_selected and not is_creator %}selected{% endif %} {# Selecciona otros si ya estaban autorizados #}
                             >
-                                {{ user.nombre }} {{ user.nombre_completo }} ({{ user.username }})
+                                {{ user.nombre }} {{ user.primer_apellido }} {{ user.segundo_apellido if user.segundo_apellido else '' }} 
+                                {% if is_creator %}(Creador){% else %}({{ user.username }}){% endif %}
                             </option>
                         {% endfor %}
                     </select>

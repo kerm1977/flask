@@ -108,8 +108,11 @@ class Note(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True)
 
-    # NUEVO CAMPO: Indica si la nota es pública (visible para todos los usuarios logueados)
+    # Campo para indicar si la nota es pública
     is_public = db.Column(db.Boolean, default=False, nullable=False)
+
+    # NUEVO CAMPO: Para almacenar el color de fondo de la nota
+    background_color = db.Column(db.String(20), default='#FFFFFF', nullable=False) # Valor por defecto blanco
 
     # Relación con el usuario que crea la nota
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -123,5 +126,5 @@ class Note(db.Model):
     )
 
     def __repr__(self):
-        return f"Note('{self.title}', Creator ID: {self.creator_id}, Public: {self.is_public})"
+        return f"Note('{self.title}', Creator ID: {self.creator_id}, Public: {self.is_public}, Color: {self.background_color})"
 

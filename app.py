@@ -243,3 +243,24 @@ if __name__ == '__main__':
         db.create_all()
     app.run(debug=True, port=3030)
 
+
+# Migraciones Cmder
+        # set FLASK_APP=main.py     <--Crea un directorio de migraciones
+        # flask db init             <--
+        # $ flask db stamp head
+        # $ flask db migrate
+        # $ flask db migrate -m "mensaje x"
+        # $ flask db upgrade
+        # ERROR [flask_migrate] Error: Target database is not up to date.
+        # $ flask db stamp head
+        # $ flask db migrate
+        # $ flask db upgrade
+        # git clone https://github.com/kerm1977/MI_APP_FLASK.git
+        # mysql> DROP DATABASE kenth1977$db; PYTHONANYWHATE
+# -----------------------
+
+# del db.db
+# rmdir /s /q migrations
+# flask db init
+# flask db migrate -m "Reinitial migration with all correct models"
+# flask db upgrade
